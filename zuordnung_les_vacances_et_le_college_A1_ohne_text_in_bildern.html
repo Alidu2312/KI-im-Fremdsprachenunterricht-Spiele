@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jeu de vocabulaire – Les vacances et le collège</title>
+<style>
+:root{
+  --bg:#f5f9ff; --card:#ffffff; --ink:#1f3550; --muted:#6c7b8a;
+  --blue:#3a7bd5; --blue2:#63c7ff; --green:#2ca66f; --green-soft:#eaf8f1;
+  --red:#d94b4b; --red-soft:#fff0f0; --gold:#f3c95c; --border:#dbe6f0;
+  --shadow:0 18px 48px rgba(44,72,110,.14);
+}
+*{box-sizing:border-box}
+body{
+  margin:0; min-height:100vh; font-family:"Segoe UI",Arial,sans-serif; color:var(--ink);
+  background:
+    radial-gradient(circle at 12% 8%, rgba(243,201,92,.24), transparent 24rem),
+    radial-gradient(circle at 88% 5%, rgba(99,199,255,.20), transparent 28rem),
+    linear-gradient(#fbfdff,#f3f8fd);
+  padding:18px;
+}
+.app{width:min(980px,100%);margin:auto}
+.header{display:grid;grid-template-columns:1fr auto;gap:14px;margin-bottom:15px}
+.brand,.stats,.game{background:rgba(255,255,255,.97);border:1px solid var(--border);box-shadow:var(--shadow)}
+.brand{border-radius:22px;padding:18px 22px}
+.brand small{color:var(--blue);font-weight:900;text-transform:uppercase;letter-spacing:.09em}
+.brand h1{margin:4px 0 4px;font-size:clamp(1.7rem,4vw,2.4rem)}
+.brand p{margin:0;color:var(--muted)}
+.stats{border-radius:22px;padding:14px 18px;min-width:220px;display:grid;gap:7px}
+.stat{display:flex;justify-content:space-between;gap:18px;font-weight:800}
+.stat span{color:var(--muted)} .stat strong{color:var(--blue)}
+.game{border-radius:28px;overflow:hidden}
+.hero{
+  padding:22px 28px;background:linear-gradient(135deg,#e5f6ff,#fff6dd);
+  border-bottom:1px solid var(--border);display:flex;justify-content:space-between;
+  gap:16px;align-items:center;flex-wrap:wrap
+}
+.hero h2{margin:0 0 6px}.hero p{margin:0;color:#597087}
+.badge{background:#fff;border:1px solid var(--border);border-radius:999px;padding:8px 12px;font-weight:900;color:#7a5c14}
+.content{padding:clamp(22px,4vw,36px)}
+.progress{display:flex;gap:10px;align-items:center;margin-bottom:22px}
+.track{flex:1;height:11px;border-radius:999px;background:#edf2f7;overflow:hidden}
+.bar{width:0%;height:100%;background:linear-gradient(90deg,var(--blue),var(--blue2));transition:width .25s ease}
+.counter{min-width:72px;text-align:right;color:var(--muted);font-weight:800}
+.game-grid{display:grid;grid-template-columns:320px 1fr;gap:28px;align-items:center}
+.picture-card{
+  min-height:290px;border-radius:24px;background:#f9fcff;border:2px solid var(--border);
+  display:grid;place-items:center;padding:18px
+}
+.picture-card svg{width:100%;height:240px;display:block}
+.task h3{margin:0 0 8px;font-size:1.35rem}
+.task p{margin:0 0 18px;color:var(--muted)}
+.options{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.option{
+  border:2px solid var(--border);background:#fff;border-radius:17px;padding:15px 12px;
+  color:var(--ink);font:inherit;font-size:1.04rem;font-weight:850;cursor:pointer;transition:.15s ease
+}
+.option:hover{border-color:var(--blue);background:#eef7ff}
+.option.correct{border-color:var(--green);background:var(--green-soft);color:#176a44}
+.option.wrong{border-color:var(--red);background:var(--red-soft);color:#9b3030}
+.option:disabled{cursor:default}
+.feedback{display:none;margin-top:15px;padding:12px 14px;border-radius:14px;font-weight:850}
+.feedback.good{display:block;background:var(--green-soft);color:#176a44;border:1px solid #bde3cd}
+.feedback.bad{display:block;background:var(--red-soft);color:#9b3030;border:1px solid #efc0c0}
+.next{
+  display:none;margin-top:15px;border:0;border-radius:14px;padding:12px 20px;
+  background:var(--blue);color:#fff;font:inherit;font-weight:900;cursor:pointer
+}
+.end{display:none;text-align:center;padding:24px 8px}
+.end .big{font-size:4.5rem}.end h2{font-size:2rem;margin:8px 0}.end p{color:var(--muted);font-size:1.08rem}
+.restart{
+  border:0;border-radius:14px;padding:12px 20px;background:#e8f3ff;color:var(--blue);
+  font:inherit;font-weight:900;cursor:pointer;margin-top:10px
+}
+.legend{margin-top:12px;text-align:center;color:var(--muted);font-size:.82rem}
+@media(max-width:760px){
+  body{padding:9px}.header{grid-template-columns:1fr}.stats{min-width:0}
+  .game-grid{grid-template-columns:1fr}.picture-card{min-height:220px}
+  .picture-card svg{height:200px}.options{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<main class="app">
+  <section class="header">
+    <div class="brand">
+      <small>Français · A1</small>
+      <h1>Les vacances et le collège</h1>
+      <p>Regarde l'image et choisis le mot français.</p>
+    </div>
+    <div class="stats">
+      <div class="stat"><span>Points</span><strong id="score">0</strong></div>
+      <div class="stat"><span>Richtig</span><strong id="correctCount">0</strong></div>
+      <div class="stat"><span>Wörter</span><strong id="totalCount">0</strong></div>
+    </div>
+  </section>
+
+  <section class="game">
+    <div class="hero">
+      <div>
+        <h2>Jeu de vocabulaire</h2>
+        <p>Ordne jedem Bild den passenden französischen Begriff zu.</p>
+      </div>
+      <div class="badge">🏖️ + 🏫</div>
+    </div>
+
+    <div class="content">
+      <div id="gameArea">
+        <div class="progress">
+          <div class="track"><div class="bar" id="bar"></div></div>
+          <div class="counter" id="counter"></div>
+        </div>
+
+        <div class="game-grid">
+          <div class="picture-card" id="picture"></div>
+          <div class="task">
+            <h3>Quel est le mot ?</h3>
+            <p>Choisis la bonne réponse.</p>
+            <div class="options" id="options"></div>
+            <div class="feedback" id="feedback" aria-live="polite"></div>
+            <button class="next" id="nextBtn" type="button">Suivant</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="end" id="endScreen">
+        <div class="big">🎉📚</div>
+        <h2>Bravo !</h2>
+        <p id="resultText"></p>
+        <button class="restart" id="restartBtn" type="button">Rejouer</button>
+      </div>
+    </div>
+  </section>
+
+  <p class="legend">Offline spielbar · eine HTML-Datei · Text-Bild-Zuordnung</p>
+</main>
+
+<script>
+const items = [
+  {word:"la plage", cat:"vacances", svg:`<svg viewBox="0 0 260 200"><rect width="260" height="200" rx="22" fill="#dff5ff"/><rect y="120" width="260" height="80" fill="#ffe3a6"/><path d="M0 110 Q45 95 90 110 T180 110 T260 110 V145 H0Z" fill="#58c7f3"/><circle cx="205" cy="45" r="25" fill="#ffd45b"/><path d="M62 105 Q92 55 122 105" fill="#ff7b6b"/><rect x="88" y="105" width="6" height="40" fill="#7f5539"/></svg>`},
+  {word:"la montagne", cat:"vacances", svg:`<svg viewBox="0 0 260 200"><rect width="260" height="200" rx="22" fill="#dff5ff"/><circle cx="205" cy="42" r="22" fill="#ffd45b"/><polygon points="25,165 105,55 180,165" fill="#7799b5"/><polygon points="95,68 105,55 121,79 108,76" fill="#fff"/><polygon points="100,165 170,82 240,165" fill="#527b63"/><polygon points="162,92 170,82 184,101 173,98" fill="#fff"/></svg>`},
+  {word:"dormir", cat:"vacances", svg:`<svg viewBox="0 0 260 200"><rect width="260" height="200" rx="22" fill="#eef1ff"/><rect x="45" y="100" width="165" height="55" rx="8" fill="#8ec5ff"/><rect x="55" y="80" width="55" height="30" rx="12" fill="#fff"/><circle cx="105" cy="94" r="18" fill="#f0c7a4"/></svg>`},
+  {word:"voyager", cat:"vacances", svg:`<svg viewBox="0 0 260 200"><rect width="260" height="200" rx="22" fill="#eaf6ff"/><path d="M35 105 L205 65 L135 118 L105 118 L82 145 L66 141 L78 115 Z" fill="#3a7bd5"/><rect x="35" y="140" width="70" height="40" rx="7" fill="#f2c14e"/><rect x="53" y="132" width="34" height="12" rx="5" fill="#8d6e63"/></svg>`},
+  {word:"nager", cat:"vacances", svg:`<svg viewBox="0 0 260 200"><rect width="260" height="200" rx="22" fill="#dff5ff"/><path d="M0 115 Q35 100 70 115 T140 115 T210 115 T280 115 V200 H0Z" fill="#58c7f3"/><circle cx="105" cy="92" r="17" fill="#f0c7a4"/><path d="M120 95 Q145 85 168 97" stroke="#17324d" stroke-width="8" fill="none" stroke-linecap="round"/><path d="M100 108 Q80 125 62 118" stroke="#17324d" stroke-width="8" fill="none" stroke-linecap="round"/></svg>`},
+  {word:"faire du vélo", cat:"vacances", svg:`<svg viewBox="0 0 260 200"><rect width="260" height="200" rx="22" fill="#f2fbff"/><circle cx="75" cy="145" r="32" fill="none" stroke="#2f80ed" stroke-width="7"/><circle cx="185" cy="145" r="32" fill="none" stroke="#2f80ed" stroke-width="7"/><path d="M75 145 L110 95 L145 145 L105 145 L132 105 L185 145" fill="none" stroke="#17324d" stroke-width="6"/><circle cx="128" cy="58" r="15" fill="#f0c7a4"/><path d="M128 73 L112 105 L145 116" stroke="#17324d" stroke-width="7" fill="none" stroke-linecap="round"/></svg>`},
+  {word:"faire du shopping", cat:"vacances", svg:`<svg viewBox="0 0 260 200"><rect width="260" height="200" rx="22" fill="#fff5ef"/><rect x="52" y="75" width="65" height="85" rx="8" fill="#ff8fa3"/><path d="M68 82 Q84 50 101 82" fill="none" stroke="#9b3b53" stroke-width="6"/><rect x="140" y="65" width="70" height="95" rx="8" fill="#ffd166"/><path d="M156 74 Q174 40 194 74" fill="none" stroke="#a17c1f" stroke-width="6"/></svg>`},
+
+  {word:"les élèves", cat:"college", svg:`<svg viewBox="0 0 260 200"><rect width="260" height="200" rx="22" fill="#f4f8ff"/><circle cx="72" cy="68" r="18" fill="#f0c7a4"/><rect x="53" y="88" width="38" height="58" rx="8" fill="#5aa9e6"/><circle cx="130" cy="62" r="18" fill="#d9a77f"/><rect x="111" y="82" width="38" height="64" rx="8" fill="#7bd389"/><circle cx="190" cy="70" r="18" fill="#f0c7a4"/><rect x="171" y="90" width="38" height="56" rx="8" fill="#ff9b85"/></svg>`},
+  {word:"les professeurs", cat:"college", svg:`<svg viewBox="0 0 260 200"><rect width="260" height="200" rx="22" fill="#eef7f2"/><rect x="28" y="25" width="204" height="58" rx="8" fill="#2f6f55"/><circle cx="88" cy="118" r="20" fill="#f0c7a4"/><rect x="66" y="140" width="44" height="38" rx="8" fill="#4e79a7"/><circle cx="170" cy="118" r="20" fill="#d9a77f"/><rect x="148" y="140" width="44" height="38" rx="8" fill="#59a14f"/><path d="M108 132 L128 108 L148 132" stroke="#17324d" stroke-width="4" fill="none"/></svg>`},
+  {word:"les copains", cat:"college", svg:`<svg viewBox="0 0 260 200"><rect width="260" height="200" rx="22" fill="#fff8e8"/><circle cx="82" cy="84" r="20" fill="#f0c7a4"/><circle cx="178" cy="84" r="20" fill="#d9a77f"/><rect x="60" y="106" width="44" height="55" rx="10" fill="#63c7ff"/><rect x="156" y="106" width="44" height="55" rx="10" fill="#ff9b85"/><path d="M104 124 Q130 102 156 124" stroke="#17324d" stroke-width="5" fill="none"/><path d="M67 79 Q82 91 97 79 M163 79 Q178 91 193 79" stroke="#17324d" stroke-width="3" fill="none"/></svg>`},
+  {word:"le principal", cat:"college", svg:`<svg viewBox="0 0 260 200"><rect width="260" height="200" rx="22" fill="#f3f6fa"/><rect x="38" y="28" width="184" height="38" rx="8" fill="#17324d"/><rect x="62" y="88" width="136" height="62" rx="8" fill="#d8b28a"/><circle cx="130" cy="92" r="20" fill="#f0c7a4"/><rect x="108" y="112" width="44" height="26" rx="7" fill="#2f80ed"/><rect x="82" y="154" width="96" height="10" rx="5" fill="#6c7b8a"/></svg>`},
+  {word:"parler", cat:"college", svg:`<svg viewBox="0 0 260 200"><rect width="260" height="200" rx="22" fill="#f8fbff"/><circle cx="75" cy="105" r="24" fill="#f0c7a4"/><circle cx="180" cy="105" r="24" fill="#d9a77f"/><path d="M98 88 Q130 55 162 88" fill="#fff" stroke="#3a7bd5" stroke-width="4"/><circle cx="118" cy="80" r="4" fill="#3a7bd5"/><circle cx="132" cy="80" r="4" fill="#3a7bd5"/><circle cx="146" cy="80" r="4" fill="#3a7bd5"/></svg>`},
+  {word:"lire", cat:"college", svg:`<svg viewBox="0 0 260 200"><rect width="260" height="200" rx="22" fill="#fffaf0"/><path d="M45 60 Q90 48 130 65 V155 Q90 138 45 150 Z" fill="#fff" stroke="#3a7bd5" stroke-width="5"/><path d="M215 60 Q170 48 130 65 V155 Q170 138 215 150 Z" fill="#fff" stroke="#3a7bd5" stroke-width="5"/><path d="M65 88 H110 M65 108 H110 M150 88 H195 M150 108 H195" stroke="#6c7b8a" stroke-width="4"/></svg>`},
+  {word:"écrire", cat:"college", svg:`<svg viewBox="0 0 260 200"><rect width="260" height="200" rx="22" fill="#f7fbff"/><rect x="55" y="45" width="120" height="110" rx="8" fill="#fff" stroke="#a7b6c5" stroke-width="4"/><path d="M75 75 H145 M75 98 H145 M75 121 H125" stroke="#6c7b8a" stroke-width="4"/><g transform="rotate(-35 170 115)"><rect x="160" y="65" width="16" height="85" rx="6" fill="#3a7bd5"/><polygon points="160,150 176,150 168,170" fill="#d8b28a"/></g></svg>`},
+  {word:"les matières", cat:"college", svg:`<svg viewBox="0 0 260 200"><rect width="260" height="200" rx="22" fill="#f5f9ff"/><rect x="28" y="60" width="58" height="88" rx="8" fill="#4e79a7"/><rect x="101" y="60" width="58" height="88" rx="8" fill="#f28e2b"/><rect x="174" y="60" width="58" height="88" rx="8" fill="#59a14f"/></svg>`},
+  {word:"le français", cat:"college", svg:`<svg viewBox="0 0 260 200"><rect width="260" height="200" rx="22" fill="#f8fbff"/><rect x="42" y="28" width="176" height="144" rx="12" fill="#fff" stroke="#b9c8d6" stroke-width="4"/><rect x="70" y="78" width="40" height="58" fill="#2f80ed"/><rect x="110" y="78" width="40" height="58" fill="#fff" stroke="#ddd"/><rect x="150" y="78" width="40" height="58" fill="#e24d4d"/></svg>`},
+  {word:"les maths", cat:"college", svg:`<svg viewBox="0 0 260 200"><rect width="260" height="200" rx="22" fill="#f8fbff"/><rect x="50" y="62" width="160" height="95" rx="10" fill="#fff" stroke="#b9c8d6" stroke-width="4"/></svg>`},
+  {word:"l'histoire-géo", cat:"college", svg:`<svg viewBox="0 0 260 200"><rect width="260" height="200" rx="22" fill="#fffaf0"/><circle cx="82" cy="105" r="46" fill="#63c7ff" stroke="#2f80ed" stroke-width="5"/><path d="M55 87 q18 -20 30 0 t20 17 q-18 8 -10 25 q-22 7 -40 -5z" fill="#67b56d"/><rect x="150" y="72" width="70" height="70" rx="8" fill="#d8b28a"/><path d="M160 118 H210" stroke="#8d6e63" stroke-width="4"/></svg>`},
+  {word:"l'EPS", cat:"college", svg:`<svg viewBox="0 0 260 200"><rect width="260" height="200" rx="22" fill="#f3fbf6"/><circle cx="110" cy="70" r="16" fill="#f0c7a4"/><path d="M110 86 L98 122 L72 152 M101 112 L142 120 M110 88 L148 98" stroke="#17324d" stroke-width="8" fill="none" stroke-linecap="round"/><circle cx="185" cy="145" r="24" fill="#fff" stroke="#17324d" stroke-width="5"/><path d="M171 139 l14 -9 14 9 -5 16h-18z" fill="#17324d"/></svg>`},
+  {word:"les SVT", cat:"college", svg:`<svg viewBox="0 0 260 200"><rect width="260" height="200" rx="22" fill="#f2fbf5"/><path d="M80 158 C60 120 78 82 112 56 C136 90 138 130 105 158 Z" fill="#67b56d"/><path d="M90 143 Q104 108 112 78" stroke="#2f6f55" stroke-width="5" fill="none"/><circle cx="176" cy="106" r="34" fill="#dff5ff" stroke="#3a7bd5" stroke-width="5"/><circle cx="164" cy="98" r="6" fill="#3a7bd5"/><circle cx="186" cy="116" r="7" fill="#67b56d"/></svg>`},
+  {word:"la salle de classe", cat:"college", svg:`<svg viewBox="0 0 260 200"><rect width="260" height="200" rx="22" fill="#f6f9fc"/><rect x="35" y="28" width="190" height="65" rx="6" fill="#2f6f55"/><path d="M60 55 H165" stroke="#fff" stroke-width="5"/><rect x="55" y="120" width="60" height="18" rx="4" fill="#d8b28a"/><rect x="145" y="120" width="60" height="18" rx="4" fill="#d8b28a"/></svg>`},
+  {word:"la cour", cat:"college", svg:`<svg viewBox="0 0 260 200"><rect width="260" height="200" rx="22" fill="#dff5ff"/><rect y="115" width="260" height="85" fill="#d7d7d7"/><rect x="20" y="38" width="220" height="77" rx="4" fill="#f2c14e"/><rect x="38" y="58" width="34" height="35" fill="#8ec5ff"/><rect x="88" y="58" width="34" height="35" fill="#8ec5ff"/><rect x="138" y="58" width="34" height="35" fill="#8ec5ff"/><rect x="188" y="58" width="34" height="35" fill="#8ec5ff"/><circle cx="115" cy="151" r="15" fill="#fff" stroke="#17324d" stroke-width="4"/><circle cx="70" cy="150" r="10" fill="#f0c7a4"/><circle cx="180" cy="150" r="10" fill="#d9a77f"/></svg>`},
+  {word:"la cantine", cat:"college", svg:`<svg viewBox="0 0 260 200"><rect width="260" height="200" rx="22" fill="#fffaf0"/><rect x="42" y="118" width="176" height="18" rx="5" fill="#d8b28a"/><circle cx="95" cy="91" r="28" fill="#fff" stroke="#a7b6c5" stroke-width="4"/><circle cx="95" cy="91" r="11" fill="#67b56d"/><rect x="145" y="70" width="50" height="30" rx="5" fill="#fff" stroke="#a7b6c5" stroke-width="3"/><rect x="151" y="76" width="14" height="18" fill="#ff7b6b"/><rect x="168" y="76" width="20" height="18" fill="#ffd166"/><rect x="68" y="136" width="9" height="42" fill="#8d6e63"/><rect x="183" y="136" width="9" height="42" fill="#8d6e63"/></svg>`},
+  {word:"le CDI", cat:"college", svg:`<svg viewBox="0 0 260 200"><rect width="260" height="200" rx="22" fill="#f8fbff"/><rect x="28" y="48" width="62" height="108" fill="#d9e7f2"/><rect x="170" y="48" width="62" height="108" fill="#d9e7f2"/><g fill="#3a7bd5"><rect x="36" y="60" width="11" height="30"/><rect x="50" y="56" width="11" height="34"/><rect x="64" y="62" width="11" height="28"/><rect x="178" y="60" width="11" height="30"/><rect x="192" y="56" width="11" height="34"/><rect x="206" y="62" width="11" height="28"/></g><rect x="98" y="84" width="64" height="48" rx="5" fill="#17324d"/><rect x="113" y="134" width="34" height="8" rx="4" fill="#6c7b8a"/></svg>`},
+  {word:"les toilettes", cat:"college", svg:`<svg viewBox="0 0 260 200"><rect width="260" height="200" rx="22" fill="#f7fbff"/><rect x="48" y="40" width="65" height="120" rx="8" fill="#63c7ff"/><rect x="147" y="40" width="65" height="120" rx="8" fill="#ff9b85"/><circle cx="80" cy="78" r="12" fill="#fff"/><path d="M80 92 V132 M65 108 H95" stroke="#fff" stroke-width="6"/><circle cx="180" cy="78" r="12" fill="#fff"/><path d="M180 92 L165 132 H195 Z" fill="#fff"/></svg>`},
+  {word:"l'emploi du temps", cat:"college", svg:`<svg viewBox="0 0 260 200"><rect width="260" height="200" rx="22" fill="#f8fbff"/><rect x="45" y="35" width="170" height="130" rx="8" fill="#fff" stroke="#a7b6c5" stroke-width="4"/><path d="M45 70 H215 M85 35 V165 M125 35 V165 M165 35 V165" stroke="#b9c8d6" stroke-width="3"/><path d="M45 100 H215 M45 130 H215" stroke="#b9c8d6" stroke-width="3"/><rect x="88" y="74" width="34" height="22" fill="#63c7ff"/><rect x="128" y="104" width="34" height="22" fill="#ffd166"/><rect x="168" y="134" width="34" height="22" fill="#ff9b85"/></svg>`}
+];
+
+let deck=[], current=0, score=0, correct=0, locked=false;
+
+const scoreEl=document.getElementById("score");
+const correctEl=document.getElementById("correctCount");
+const totalEl=document.getElementById("totalCount");
+const bar=document.getElementById("bar");
+const counter=document.getElementById("counter");
+const picture=document.getElementById("picture");
+const options=document.getElementById("options");
+const feedback=document.getElementById("feedback");
+const nextBtn=document.getElementById("nextBtn");
+const gameArea=document.getElementById("gameArea");
+const endScreen=document.getElementById("endScreen");
+const resultText=document.getElementById("resultText");
+const restartBtn=document.getElementById("restartBtn");
+
+function shuffle(arr){
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+function start(){
+  deck=shuffle(items);
+  current=0; score=0; correct=0; locked=false;
+  scoreEl.textContent="0";
+  correctEl.textContent="0";
+  totalEl.textContent=items.length;
+  gameArea.style.display="block";
+  endScreen.style.display="none";
+  show();
+}
+
+function show(){
+  locked=false;
+  const item=deck[current];
+  picture.innerHTML=item.svg;
+  counter.textContent=`${current+1} / ${deck.length}`;
+  bar.style.width=`${(current/deck.length)*100}%`;
+  feedback.className="feedback";
+  feedback.textContent="";
+  nextBtn.style.display="none";
+  options.innerHTML="";
+
+  const sameCat=items.filter(x=>x.cat===item.cat && x.word!==item.word);
+  const otherCat=items.filter(x=>x.cat!==item.cat && x.word!==item.word);
+  const distractors=[...shuffle(sameCat).slice(0,2), ...shuffle(otherCat).slice(0,1)];
+  const choices=shuffle([item,...distractors]);
+
+  choices.forEach(choice=>{
+    const btn=document.createElement("button");
+    btn.type="button";
+    btn.className="option";
+    btn.textContent=choice.word;
+    btn.dataset.word=choice.word;
+    btn.addEventListener("click",()=>answer(btn,item.word));
+    options.appendChild(btn);
+  });
+}
+
+function answer(btn,rightWord){
+  if(locked)return;
+  locked=true;
+  const buttons=[...document.querySelectorAll(".option")];
+  buttons.forEach(b=>b.disabled=true);
+
+  if(btn.dataset.word===rightWord){
+    btn.classList.add("correct");
+    score+=10; correct++;
+    scoreEl.textContent=score;
+    correctEl.textContent=correct;
+    feedback.className="feedback good";
+    feedback.textContent=`Bravo ! ${rightWord}`;
+  }else{
+    btn.classList.add("wrong");
+    const right=buttons.find(b=>b.dataset.word===rightWord);
+    if(right) right.classList.add("correct");
+    feedback.className="feedback bad";
+    feedback.textContent=`Pas tout à fait. C'est : ${rightWord}`;
+  }
+
+  nextBtn.style.display="inline-block";
+  nextBtn.textContent=current===deck.length-1 ? "Résultat" : "Suivant";
+}
+
+function next(){
+  current++;
+  if(current>=deck.length) finish();
+  else show();
+}
+
+function finish(){
+  bar.style.width="100%";
+  gameArea.style.display="none";
+  endScreen.style.display="block";
+  const max=deck.length*10;
+  const percent=Math.round((score/max)*100);
+  resultText.innerHTML=`Du hast <strong>${score} von ${max} Punkten</strong> erreicht und <strong>${correct} von ${deck.length}</strong> Begriffen richtig zugeordnet (${percent} %).`;
+}
+
+nextBtn.addEventListener("click",next);
+restartBtn.addEventListener("click",start);
+
+start();
+</script>
+</body>
+</html>
