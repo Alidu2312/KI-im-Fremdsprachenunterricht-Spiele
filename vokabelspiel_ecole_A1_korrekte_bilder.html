@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>L'école – Bild-Wort-Zuordnung A1</title>
+  <style>
+    :root{
+      --blue:#3656d4;
+      --blue-soft:#eef2ff;
+      --red:#d84a4a;
+      --red-soft:#fff0f0;
+      --green:#278f61;
+      --green-soft:#eaf8f1;
+      --ink:#243047;
+      --muted:#6f7890;
+      --border:#dfe4ef;
+      --bg:#f5f7fb;
+      --card:#ffffff;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      min-height:100vh;
+      font-family:"Segoe UI", Arial, sans-serif;
+      background:linear-gradient(180deg,#f7f9ff 0%,#f2f5fb 100%);
+      color:var(--ink);
+      padding:24px;
+    }
+
+    .app{width:min(780px,100%);margin:0 auto}
+    .top{
+      display:flex;
+      gap:16px;
+      align-items:stretch;
+      margin-bottom:16px;
+    }
+
+    .title,.scorebox{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:22px;
+      box-shadow:0 8px 22px rgba(40,55,100,.08);
+    }
+
+    .title{flex:1;padding:18px 22px}
+    .title small{
+      display:block;
+      color:var(--blue);
+      text-transform:uppercase;
+      letter-spacing:.11em;
+      font-weight:800;
+      margin-bottom:5px;
+    }
+    .title h1{margin:0;font-size:clamp(1.8rem,4vw,2.4rem)}
+    .title p{margin:5px 0 0;color:var(--muted)}
+
+    .scorebox{
+      min-width:140px;
+      display:grid;
+      place-items:center;
+      padding:12px 18px;
+      text-align:center;
+    }
+    .scorebox span:first-child{font-size:.85rem;color:var(--muted);font-weight:700}
+    .score{font-size:2rem;color:var(--blue);font-weight:900}
+
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:28px;
+      overflow:hidden;
+      box-shadow:0 18px 45px rgba(40,55,100,.13);
+    }
+
+    .stripe{
+      height:8px;
+      background:linear-gradient(90deg,#3155c8 0 33.33%,#f8f8f8 33.33% 66.66%,#e14a57 66.66%);
+    }
+
+    .content{padding:clamp(24px,5vw,42px)}
+
+    .progress{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      margin-bottom:24px;
+    }
+    .track{
+      height:10px;
+      flex:1;
+      border-radius:999px;
+      background:#edf0f6;
+      overflow:hidden;
+    }
+    .bar{
+      width:0;height:100%;
+      background:var(--blue);
+      transition:width .25s ease;
+    }
+    .counter{font-size:.9rem;color:var(--muted);font-weight:700;min-width:58px;text-align:right}
+
+    .instruction{
+      text-align:center;
+      font-size:1rem;
+      font-weight:800;
+      margin:0 0 16px;
+    }
+
+    .picture-wrap{
+      width:min(360px,100%);
+      height:250px;
+      margin:0 auto 24px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      border:2px solid #dfe4ef;
+      border-radius:24px;
+      background:#fbfcff;
+    }
+
+    .picture-wrap svg{
+      width:78%;
+      height:78%;
+      display:block;
+    }
+
+    .options{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:12px;
+    }
+
+    .option{
+      border:2px solid var(--border);
+      background:#fff;
+      border-radius:17px;
+      padding:15px 10px;
+      font:inherit;
+      font-size:1.05rem;
+      font-weight:800;
+      color:var(--ink);
+      cursor:pointer;
+      transition:.15s ease;
+    }
+
+    .option:hover{
+      border-color:var(--blue);
+      background:var(--blue-soft);
+    }
+
+    .option.correct{
+      border-color:var(--green);
+      background:var(--green-soft);
+      color:#176a48;
+    }
+
+    .option.wrong{
+      border-color:var(--red);
+      background:var(--red-soft);
+      color:#a53030;
+    }
+
+    .option:disabled{cursor:default}
+
+    .feedback{
+      display:none;
+      margin-top:16px;
+      padding:13px 15px;
+      border-radius:14px;
+      font-weight:800;
+      text-align:center;
+    }
+
+    .feedback.correct{
+      display:block;
+      background:var(--green-soft);
+      color:#176a48;
+      border:1px solid #bce5cf;
+    }
+
+    .feedback.wrong{
+      display:block;
+      background:var(--red-soft);
+      color:#a53030;
+      border:1px solid #efc1c1;
+    }
+
+    .next{
+      display:none;
+      margin:16px auto 0;
+      padding:12px 22px;
+      border:0;
+      border-radius:14px;
+      background:var(--blue);
+      color:#fff;
+      font:inherit;
+      font-weight:800;
+      cursor:pointer;
+    }
+
+    .end{
+      display:none;
+      text-align:center;
+      padding:30px 10px;
+    }
+    .end .big{font-size:4rem}
+    .end h2{margin:8px 0 10px;font-size:2rem}
+    .end p{color:var(--muted);font-size:1.08rem}
+    .restart{
+      border:0;
+      border-radius:14px;
+      background:var(--blue-soft);
+      color:var(--blue);
+      padding:12px 20px;
+      font:inherit;
+      font-weight:800;
+      cursor:pointer;
+    }
+
+    .note{
+      margin-top:12px;
+      text-align:center;
+      font-size:.8rem;
+      color:var(--muted);
+    }
+
+    @media(max-width:650px){
+      body{padding:12px}
+      .top{flex-direction:column}
+      .scorebox{min-width:0;display:flex;justify-content:space-between}
+      .score{font-size:1.6rem}
+      .options{grid-template-columns:1fr}
+      .picture-wrap{height:210px}
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="top">
+      <div class="title">
+        <small>Français · A1</small>
+        <h1>L'école</h1>
+        <p>Regarde l'image et choisis le mot.</p>
+      </div>
+      <div class="scorebox">
+        <span>Points</span>
+        <span class="score" id="score">0</span>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="stripe"></div>
+      <div class="content">
+        <div id="game">
+          <div class="progress">
+            <div class="track"><div class="bar" id="bar"></div></div>
+            <div class="counter" id="counter"></div>
+          </div>
+
+          <p class="instruction">Quel est le mot ?</p>
+          <div class="picture-wrap" id="picture"></div>
+
+          <div class="options" id="options"></div>
+          <div class="feedback" id="feedback" aria-live="polite"></div>
+          <button class="next" id="nextBtn" type="button">Suivant</button>
+        </div>
+
+        <div class="end" id="end">
+          <div class="big">🎓</div>
+          <h2>Bravo !</h2>
+          <p id="result"></p>
+          <button class="restart" id="restartBtn" type="button">Rejouer</button>
+        </div>
+      </div>
+    </section>
+    <p class="note">Eindeutige Bild-Wort-Zuordnung mit Schulgegenständen.</p>
+  </main>
+
+<script>
+const items = [
+  {
+    word:"le livre",
+    svg:`<svg viewBox="0 0 220 160" role="img" aria-label="ein Buch">
+      <rect x="45" y="25" width="130" height="110" rx="8" fill="#ffffff" stroke="#3656d4" stroke-width="5"/>
+      <rect x="55" y="35" width="110" height="90" rx="4" fill="#eef2ff"/>
+      <line x1="75" y1="55" x2="145" y2="55" stroke="#3656d4" stroke-width="5" stroke-linecap="round"/>
+      <line x1="75" y1="75" x2="145" y2="75" stroke="#3656d4" stroke-width="5" stroke-linecap="round"/>
+      <line x1="75" y1="95" x2="130" y2="95" stroke="#3656d4" stroke-width="5" stroke-linecap="round"/>
+    </svg>`
+  },
+  {
+    word:"le cahier",
+    svg:`<svg viewBox="0 0 220 160" role="img" aria-label="ein Heft">
+      <rect x="55" y="20" width="110" height="120" rx="6" fill="#fff" stroke="#278f61" stroke-width="5"/>
+      <line x1="75" y1="20" x2="75" y2="140" stroke="#278f61" stroke-width="4"/>
+      <g stroke="#6f7890" stroke-width="3">
+        <line x1="88" y1="52" x2="145" y2="52"/>
+        <line x1="88" y1="72" x2="145" y2="72"/>
+        <line x1="88" y1="92" x2="145" y2="92"/>
+        <line x1="88" y1="112" x2="135" y2="112"/>
+      </g>
+      <g fill="#278f61">
+        <circle cx="63" cy="38" r="4"/><circle cx="63" cy="58" r="4"/><circle cx="63" cy="78" r="4"/>
+        <circle cx="63" cy="98" r="4"/><circle cx="63" cy="118" r="4"/>
+      </g>
+    </svg>`
+  },
+  {
+    word:"le stylo",
+    svg:`<svg viewBox="0 0 220 160" role="img" aria-label="ein Kugelschreiber">
+      <g transform="rotate(-30 110 80)">
+        <rect x="100" y="25" width="22" height="95" rx="8" fill="#3656d4"/>
+        <rect x="103" y="18" width="16" height="18" rx="4" fill="#243047"/>
+        <polygon points="100,120 122,120 111,145" fill="#dfe4ef" stroke="#243047" stroke-width="3"/>
+        <circle cx="111" cy="143" r="3" fill="#243047"/>
+      </g>
+    </svg>`
+  },
+  {
+    word:"le crayon",
+    svg:`<svg viewBox="0 0 220 160" role="img" aria-label="ein Bleistift">
+      <g transform="rotate(-25 110 80)">
+        <rect x="98" y="22" width="24" height="100" fill="#f6c453" stroke="#b98a18" stroke-width="3"/>
+        <rect x="98" y="22" width="24" height="18" fill="#f19ab1"/>
+        <polygon points="98,122 122,122 110,148" fill="#efd7b2" stroke="#8a6b45" stroke-width="3"/>
+        <polygon points="106,140 114,140 110,148" fill="#243047"/>
+      </g>
+    </svg>`
+  },
+  {
+    word:"la gomme",
+    svg:`<svg viewBox="0 0 220 160" role="img" aria-label="ein Radiergummi">
+      <g transform="rotate(-12 110 80)">
+        <rect x="60" y="50" width="100" height="62" rx="12" fill="#f19ab1" stroke="#b54f6b" stroke-width="5"/>
+        <rect x="105" y="50" width="55" height="62" rx="12" fill="#8ac6ff" stroke="#4f95cf" stroke-width="5"/>
+        <line x1="105" y1="52" x2="105" y2="110" stroke="#ffffff" stroke-width="4"/>
+      </g>
+    </svg>`
+  },
+  {
+    word:"la règle",
+    svg:`<svg viewBox="0 0 220 160" role="img" aria-label="ein Lineal">
+      <rect x="35" y="60" width="150" height="40" rx="6" fill="#f6c453" stroke="#b98a18" stroke-width="4"/>
+      <g stroke="#7d651e" stroke-width="3">
+        <line x1="50" y1="60" x2="50" y2="76"/>
+        <line x1="65" y1="60" x2="65" y2="84"/>
+        <line x1="80" y1="60" x2="80" y2="76"/>
+        <line x1="95" y1="60" x2="95" y2="84"/>
+        <line x1="110" y1="60" x2="110" y2="76"/>
+        <line x1="125" y1="60" x2="125" y2="84"/>
+        <line x1="140" y1="60" x2="140" y2="76"/>
+        <line x1="155" y1="60" x2="155" y2="84"/>
+      </g>
+    </svg>`
+  },
+  {
+    word:"les ciseaux",
+    svg:`<svg viewBox="0 0 220 160" role="img" aria-label="eine Schere">
+      <circle cx="75" cy="105" r="23" fill="none" stroke="#d84a4a" stroke-width="10"/>
+      <circle cx="115" cy="105" r="23" fill="none" stroke="#d84a4a" stroke-width="10"/>
+      <line x1="88" y1="88" x2="155" y2="35" stroke="#6f7890" stroke-width="9" stroke-linecap="round"/>
+      <line x1="102" y1="88" x2="180" y2="55" stroke="#6f7890" stroke-width="9" stroke-linecap="round"/>
+      <circle cx="96" cy="86" r="7" fill="#243047"/>
+    </svg>`
+  },
+  {
+    word:"la trousse",
+    svg:`<svg viewBox="0 0 220 160" role="img" aria-label="ein Mäppchen">
+      <rect x="45" y="55" width="130" height="60" rx="18" fill="#8ac6ff" stroke="#3656d4" stroke-width="5"/>
+      <line x1="60" y1="68" x2="160" y2="68" stroke="#243047" stroke-width="4"/>
+      <circle cx="158" cy="68" r="5" fill="#243047"/>
+      <rect x="78" y="42" width="64" height="18" rx="7" fill="#eef2ff" stroke="#3656d4" stroke-width="4"/>
+    </svg>`
+  },
+  {
+    word:"le sac à dos",
+    svg:`<svg viewBox="0 0 220 160" role="img" aria-label="ein Rucksack">
+      <path d="M70 55 Q70 30 110 30 Q150 30 150 55 L165 130 H55 Z" fill="#3656d4" stroke="#243047" stroke-width="5"/>
+      <path d="M88 42 Q110 20 132 42" fill="none" stroke="#243047" stroke-width="6" stroke-linecap="round"/>
+      <rect x="78" y="82" width="64" height="34" rx="10" fill="#eef2ff" stroke="#243047" stroke-width="4"/>
+      <line x1="110" y1="82" x2="110" y2="116" stroke="#243047" stroke-width="4"/>
+    </svg>`
+  },
+  {
+    word:"la chaise",
+    svg:`<svg viewBox="0 0 220 160" role="img" aria-label="ein Stuhl">
+      <rect x="70" y="35" width="80" height="55" rx="8" fill="#8ac6ff" stroke="#3656d4" stroke-width="5"/>
+      <rect x="70" y="88" width="80" height="22" rx="6" fill="#f6c453" stroke="#b98a18" stroke-width="5"/>
+      <line x1="80" y1="108" x2="72" y2="145" stroke="#243047" stroke-width="6"/>
+      <line x1="140" y1="108" x2="148" y2="145" stroke="#243047" stroke-width="6"/>
+    </svg>`
+  },
+  {
+    word:"la table",
+    svg:`<svg viewBox="0 0 220 160" role="img" aria-label="ein Tisch">
+      <rect x="40" y="55" width="140" height="30" rx="5" fill="#f6c453" stroke="#b98a18" stroke-width="5"/>
+      <line x1="58" y1="83" x2="50" y2="145" stroke="#243047" stroke-width="7"/>
+      <line x1="162" y1="83" x2="170" y2="145" stroke="#243047" stroke-width="7"/>
+    </svg>`
+  },
+  {
+    word:"le tableau",
+    svg:`<svg viewBox="0 0 220 160" role="img" aria-label="eine Schultafel">
+      <rect x="35" y="28" width="150" height="92" rx="6" fill="#2e6d53" stroke="#243047" stroke-width="6"/>
+      <line x1="55" y1="55" x2="135" y2="55" stroke="#ffffff" stroke-width="5" stroke-linecap="round"/>
+      <line x1="55" y1="78" x2="150" y2="78" stroke="#ffffff" stroke-width="5" stroke-linecap="round"/>
+      <line x1="55" y1="101" x2="115" y2="101" stroke="#ffffff" stroke-width="5" stroke-linecap="round"/>
+      <rect x="80" y="121" width="60" height="8" rx="4" fill="#6f7890"/>
+    </svg>`
+  }
+];
+
+const rounds = items.length;
+let deck = [];
+let index = 0;
+let score = 0;
+let answered = false;
+
+const scoreEl = document.getElementById("score");
+const barEl = document.getElementById("bar");
+const counterEl = document.getElementById("counter");
+const pictureEl = document.getElementById("picture");
+const optionsEl = document.getElementById("options");
+const feedbackEl = document.getElementById("feedback");
+const nextBtn = document.getElementById("nextBtn");
+const gameEl = document.getElementById("game");
+const endEl = document.getElementById("end");
+const resultEl = document.getElementById("result");
+const restartBtn = document.getElementById("restartBtn");
+
+function shuffle(arr){
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+function start(){
+  deck=shuffle(items);
+  index=0;
+  score=0;
+  scoreEl.textContent="0";
+  gameEl.style.display="block";
+  endEl.style.display="none";
+  show();
+}
+
+function show(){
+  answered=false;
+  const target=deck[index];
+  pictureEl.innerHTML=target.svg;
+  counterEl.textContent=`${index+1} / ${rounds}`;
+  barEl.style.width=`${(index/rounds)*100}%`;
+  feedbackEl.className="feedback";
+  feedbackEl.textContent="";
+  nextBtn.style.display="none";
+
+  const distractors=shuffle(items.filter(x=>x.word!==target.word)).slice(0,2);
+  const choices=shuffle([target,...distractors]);
+  optionsEl.innerHTML="";
+
+  choices.forEach(choice=>{
+    const b=document.createElement("button");
+    b.type="button";
+    b.className="option";
+    b.textContent=choice.word;
+    b.dataset.word=choice.word;
+    b.addEventListener("click",()=>answer(b,target.word));
+    optionsEl.appendChild(b);
+  });
+}
+
+function answer(button, correct){
+  if(answered)return;
+  answered=true;
+
+  const buttons=[...document.querySelectorAll(".option")];
+  buttons.forEach(b=>b.disabled=true);
+
+  if(button.dataset.word===correct){
+    button.classList.add("correct");
+    score+=10;
+    scoreEl.textContent=score;
+    feedbackEl.className="feedback correct";
+    feedbackEl.textContent=`Bravo ! ${correct}`;
+  }else{
+    button.classList.add("wrong");
+    const right=buttons.find(b=>b.dataset.word===correct);
+    if(right)right.classList.add("correct");
+    feedbackEl.className="feedback wrong";
+    feedbackEl.textContent=`C'est : ${correct}`;
+  }
+
+  nextBtn.style.display="block";
+  nextBtn.textContent=index===rounds-1 ? "Résultat" : "Suivant";
+}
+
+function next(){
+  index++;
+  if(index>=rounds){
+    finish();
+  }else{
+    show();
+  }
+}
+
+function finish(){
+  barEl.style.width="100%";
+  gameEl.style.display="none";
+  endEl.style.display="block";
+  resultEl.innerHTML=`Du hast <strong>${score} von ${rounds*10} Punkten</strong> erreicht.`;
+}
+
+nextBtn.addEventListener("click",next);
+restartBtn.addEventListener("click",start);
+start();
+</script>
+</body>
+</html>
