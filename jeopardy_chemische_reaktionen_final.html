@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jeopardy – Chemische Reaktionen</title>
+<style>
+:root{--ink:#17324d;--blue:#2f80ed;--green:#2ca66f;--red:#d94b4b;--gold:#f2c94c;--border:#d9e6f0}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;font-family:"Segoe UI",Arial,sans-serif;background:linear-gradient(180deg,#f8fcff,#edf6fb);color:var(--ink);padding:18px}
+.app{width:min(1000px,100%);margin:auto}
+.header{background:#fff;border:1px solid var(--border);border-radius:22px;padding:18px 22px;display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap}
+.header h1{margin:0;font-size:clamp(1.7rem,4vw,2.4rem)}
+.header p{margin:5px 0 0;color:#6c7b8a}
+.score{min-width:130px;text-align:center;background:#eef6ff;border-radius:16px;padding:10px 14px;font-weight:900;color:var(--blue)}
+.board{margin-top:16px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.category{min-height:82px;padding:14px;border-radius:16px;background:var(--ink);color:#fff;display:grid;place-items:center;text-align:center;font-weight:900;font-size:1.05rem}
+.tile{min-height:105px;border:0;border-radius:16px;background:var(--blue);color:#fff;font:inherit;font-size:1.55rem;font-weight:900;cursor:pointer}
+.tile:hover{background:#236ac0}.tile.used{background:#cbd6df;color:#71808d;cursor:default}
+.overlay{position:fixed;inset:0;background:rgba(8,21,35,.72);display:none;align-items:center;justify-content:center;padding:18px}
+.overlay.show{display:flex}
+.modal{width:min(620px,96%);background:#fff;border-radius:24px;padding:26px;text-align:center}
+.modal .points{color:var(--blue);font-weight:900;margin-bottom:8px}
+.modal h2{margin:0 0 18px;font-size:1.5rem;line-height:1.4}
+.answer{display:none;margin:16px 0;padding:14px;border-radius:14px;background:#eef8f2;color:#176a44;font-weight:800}
+.actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.btn{border:0;border-radius:14px;padding:12px 18px;font:inherit;font-weight:900;cursor:pointer}
+.show-answer{background:var(--gold);color:#654d00}.correct{background:#def5e7;color:#176a44}.wrong{background:#ffe8e8;color:#9a2d2d}
+.end{display:none;margin-top:18px;text-align:center;background:#fff;border:1px solid var(--border);border-radius:20px;padding:22px}
+.restart{border:0;border-radius:14px;padding:12px 18px;background:#e8f3ff;color:var(--blue);font:inherit;font-weight:900;cursor:pointer}
+@media(max-width:700px){.board{grid-template-columns:1fr}.category{min-height:56px}.tile{min-height:72px}}
+</style>
+</head>
+<body>
+<main class="app">
+<section class="header">
+<div><h1>Jeopardy – Chemische Reaktionen</h1><p>Stoffe · Energie · Kleinste Teilchen</p></div>
+<div class="score">Punkte: <span id="score">0</span></div>
+</section>
+<section class="board" id="board"></section>
+<section class="end" id="end"><h2>Spiel beendet!</h2><p>Endpunktzahl: <strong id="finalScore"></strong></p><button class="restart" id="restartBtn" type="button">Nochmal spielen</button></section>
+</main>
+<div class="overlay" id="overlay">
+<div class="modal">
+<div class="points" id="modalPoints"></div>
+<h2 id="question"></h2>
+<div class="answer" id="answer"></div>
+<div class="actions">
+<button class="btn show-answer" id="showAnswerBtn" type="button">Antwort zeigen</button>
+<button class="btn correct" id="correctBtn" type="button" style="display:none">Richtig</button>
+<button class="btn wrong" id="wrongBtn" type="button" style="display:none">Falsch</button>
+</div>
+</div>
+</div>
+<script>
+const data=[
+{category:"Stoffe",questions:[
+{p:100,q:"Was entsteht bei einer chemischen Reaktion?",a:"Neue Stoffe mit neuen Eigenschaften."},
+{p:200,q:"Beim Verbrennen von Magnesium entsteht ein weißer Stoff. Chemische Reaktion oder physikalischer Vorgang?",a:"Chemische Reaktion, weil ein neuer Stoff mit neuen Eigenschaften entsteht."},
+{p:300,q:"Warum ist das Schmelzen von Eis keine chemische Reaktion?",a:"Es entsteht kein neuer Stoff mit neuen Eigenschaften und der Vorgang ist umkehrbar."}
+]},
+{category:"Energie",questions:[
+{p:100,q:"Was kann bei einer chemischen Reaktion mit Energie passieren?",a:"Energie kann abgegeben oder aufgenommen werden."},
+{p:200,q:"Was ist eine exotherme Reaktion?",a:"Eine Reaktion, bei der Energie an die Umgebung abgegeben wird."},
+{p:300,q:"Eine Reaktion, bei der ständig Energie zugeführt werden muss, heißt …",a:"Endotherme Reaktion."}
+]},
+{category:"Kleinste Teilchen",questions:[
+{p:100,q:"Was passiert mit den kleinsten Teilchen bei einer chemischen Reaktion?",a:"Die kleinsten Teilchen werden neu angeordnet."},
+{p:200,q:"Werden bei einer chemischen Reaktion kleinste Teilchen vernichtet?",a:"Nein. Die kleinsten Teilchen werden neu angeordnet."},
+{p:300,q:"Was passiert bei einer chemischen Reaktion mit den kleinsten Teilchen der Ausgangsstoffe?",a:"Sie werden neu angeordnet und bilden die neuen Stoffe."}
+]}];
+
+let score=0,used=0,current=null,currentButton=null;
+const board=document.getElementById("board"),scoreEl=document.getElementById("score"),overlay=document.getElementById("overlay"),modalPoints=document.getElementById("modalPoints"),question=document.getElementById("question"),answer=document.getElementById("answer"),showAnswerBtn=document.getElementById("showAnswerBtn"),correctBtn=document.getElementById("correctBtn"),wrongBtn=document.getElementById("wrongBtn"),end=document.getElementById("end"),finalScore=document.getElementById("finalScore"),restartBtn=document.getElementById("restartBtn");
+
+function buildBoard(){
+  board.innerHTML="";
+  data.forEach(cat=>{const h=document.createElement("div");h.className="category";h.textContent=cat.category;board.appendChild(h)});
+  for(let i=0;i<3;i++){
+    data.forEach(cat=>{
+      const q=cat.questions[i];
+      const b=document.createElement("button");
+      b.type="button";b.className="tile";b.textContent=q.p;
+      b.addEventListener("click",()=>openQuestion(q,b));
+      board.appendChild(b);
+    });
+  }
+}
+function openQuestion(q,b){
+  if(b.classList.contains("used"))return;
+  current=q;currentButton=b;
+  modalPoints.textContent=q.p+" Punkte";question.textContent=q.q;answer.textContent=q.a;
+  answer.style.display="none";showAnswerBtn.style.display="inline-block";correctBtn.style.display="none";wrongBtn.style.display="none";
+  overlay.classList.add("show");
+}
+showAnswerBtn.addEventListener("click",()=>{answer.style.display="block";showAnswerBtn.style.display="none";correctBtn.style.display="inline-block";wrongBtn.style.display="inline-block"});
+function finishQuestion(ok){
+  if(ok)score+=current.p;
+  scoreEl.textContent=score;currentButton.classList.add("used");currentButton.disabled=true;used++;overlay.classList.remove("show");
+  if(used===9){finalScore.textContent=score;end.style.display="block"}
+}
+correctBtn.addEventListener("click",()=>finishQuestion(true));
+wrongBtn.addEventListener("click",()=>finishQuestion(false));
+restartBtn.addEventListener("click",()=>{score=0;used=0;scoreEl.textContent="0";end.style.display="none";buildBoard()});
+buildBoard();
+</script>
+</body>
+</html>
