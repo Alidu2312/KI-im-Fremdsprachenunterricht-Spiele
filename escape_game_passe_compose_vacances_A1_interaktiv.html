@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Escape Game – Les vacances au passé composé</title>
+<style>
+:root{
+  --sky:#dff5ff; --sea:#5cc8ff; --blue:#2878d8; --navy:#17324d;
+  --sand:#ffe2a8; --sun:#ffd45b; --coral:#ff7b6b; --green:#30a46c;
+  --red:#e5484d; --white:#fff; --muted:#6c7b8c; --border:#d8e7f2;
+  --shadow:0 18px 48px rgba(39,76,110,.16);
+}
+*{box-sizing:border-box}
+body{
+  margin:0; min-height:100vh; padding:18px;
+  font-family:"Segoe UI",Arial,sans-serif; color:var(--navy);
+  background:
+    radial-gradient(circle at 8% 6%,rgba(255,212,91,.32),transparent 20rem),
+    radial-gradient(circle at 92% 8%,rgba(92,200,255,.26),transparent 25rem),
+    linear-gradient(#f8fdff,#edf8ff);
+}
+.app{width:min(1000px,100%);margin:auto}
+.header{display:grid;grid-template-columns:1fr auto;gap:14px;margin-bottom:15px}
+.brand,.stats,.game{background:rgba(255,255,255,.96);border:1px solid var(--border);box-shadow:var(--shadow)}
+.brand{border-radius:22px;padding:17px 22px}
+.brand small{color:var(--blue);font-weight:900;letter-spacing:.09em;text-transform:uppercase}
+.brand h1{margin:4px 0 3px;font-size:clamp(1.7rem,4vw,2.4rem)}
+.brand p{margin:0;color:var(--muted)}
+.stats{border-radius:22px;padding:13px 18px;min-width:210px;display:grid;gap:6px}
+.stat{display:flex;justify-content:space-between;gap:18px;font-weight:800}
+.stat span{color:var(--muted)} .stat strong{color:var(--blue)}
+.game{border-radius:28px;overflow:hidden}
+.story{
+  display:grid;grid-template-columns:1fr auto;gap:18px;align-items:center;
+  padding:22px 28px;background:linear-gradient(135deg,var(--sky),#fff8e7);border-bottom:1px solid var(--border)
+}
+.story h2{margin:0 0 6px}.story p{margin:0;color:#597087;line-height:1.45}
+.scene-icon{font-size:3.5rem}
+.content{padding:clamp(20px,4vw,36px)}
+.progress{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:24px}
+.step{padding:9px 6px;text-align:center;border-radius:12px;background:#f4f7fa;border:1px solid var(--border);font-size:.82rem;font-weight:900;color:var(--muted)}
+.step.active{background:#e8f3ff;color:var(--blue);border-color:#a9cff8}
+.step.done{background:#eaf8f1;color:#20784e;border-color:#bce4ce}
+.level-head{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;margin-bottom:18px}
+.level-head h3{margin:0;font-size:1.35rem}.level-head p{margin:5px 0 0;color:var(--muted)}
+.type{white-space:nowrap;background:#fff4d7;color:#8a6818;border:1px solid #efd391;border-radius:999px;padding:7px 11px;font-size:.8rem;font-weight:900}
+.panel{background:#f9fcff;border:1px solid var(--border);border-radius:20px;padding:20px}
+.question{font-size:1.12rem;font-weight:900;line-height:1.45;margin-bottom:16px}
+.options{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+button{
+  font:inherit;border:0;cursor:pointer;font-weight:850;transition:.15s ease;
+}
+.choice,.chip,.word,.slot-btn,.sort-btn{
+  background:#fff;border:2px solid var(--border);border-radius:15px;padding:13px;color:var(--navy)
+}
+.choice:hover,.chip:hover,.word:hover,.sort-btn:hover{border-color:var(--blue);background:#eef7ff}
+.correct{border-color:var(--green)!important;background:#eaf8f1!important;color:#176a44!important}
+.wrong{border-color:var(--red)!important;background:#fff0ef!important;color:#a23034!important}
+.feedback{display:none;margin-top:15px;padding:12px 14px;border-radius:14px;font-weight:850;line-height:1.4}
+.feedback.good{display:block;background:#eaf8f1;color:#176a44;border:1px solid #bce4ce}
+.feedback.bad{display:block;background:#fff0ef;color:#a23034;border:1px solid #efc0c2}
+.next{display:none;margin-top:15px;padding:12px 19px;border-radius:14px;background:var(--blue);color:#fff}
+.key{display:none;margin-top:13px;padding:12px 14px;border-radius:14px;background:#fff7dd;border:1px dashed #d9b850;color:#7d6119;font-weight:900}
+
+/* Sortierung */
+.sort-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.bucket{min-height:170px;padding:15px;border:2px dashed #b9cee0;border-radius:17px;background:#fff}
+.bucket h4{margin:0 0 10px;text-align:center}
+.bucket-items{display:flex;flex-wrap:wrap;gap:8px}
+.chip-row{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:15px}
+.chip.selected{border-color:var(--blue);background:#eaf4ff}
+.sort-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.sort-btn:first-child{color:#7a5411;background:#fff6d9}
+.sort-btn:last-child{color:#19603f;background:#eaf8f1}
+
+/* Satzbau */
+.word-bank,.sentence-line{display:flex;gap:8px;flex-wrap:wrap;min-height:58px;padding:11px;border-radius:15px}
+.word-bank{background:#fff;border:1px solid var(--border)}
+.sentence-line{margin-top:12px;background:#eef7ff;border:2px dashed #a7c9ee}
+.word{padding:10px 12px}
+.sentence-line .word{background:#fff}
+
+/* Lücken */
+.fill-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:1.1rem;font-weight:800}
+select,input{
+  font:inherit;border:2px solid var(--border);border-radius:12px;padding:9px 11px;background:#fff;color:var(--navy)
+}
+input{width:150px}
+.check-btn{margin-top:14px;padding:12px 18px;border-radius:14px;background:var(--blue);color:#fff}
+
+/* Detektiv */
+.detective{display:grid;gap:10px}
+.detective .choice{text-align:left}
+
+/* Finale */
+.final-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.mini-card{border:1px solid var(--border);border-radius:16px;padding:14px;background:#fff}
+.mini-card label{display:block;font-weight:800;margin-bottom:7px}
+.end{text-align:center;display:none;padding:22px 8px}
+.end .big{font-size:4.5rem}.end h2{font-size:2rem;margin:7px 0}.end p{color:var(--muted)}
+.restart{padding:13px 20px;border-radius:14px;background:#e8f3ff;color:var(--blue);margin-top:10px}
+@media(max-width:760px){
+  body{padding:9px}.header{grid-template-columns:1fr}.stats{min-width:0}
+  .progress{grid-template-columns:repeat(3,1fr)}
+  .options,.sort-grid,.final-grid{grid-template-columns:1fr}
+  .story{grid-template-columns:1fr}.scene-icon{display:none}
+}
+</style>
+</head>
+<body>
+<main class="app">
+  <section class="header">
+    <div class="brand">
+      <small>Français · A1</small>
+      <h1>Escape Game – Les vacances</h1>
+      <p>Passé composé avec avoir et être</p>
+    </div>
+    <div class="stats">
+      <div class="stat"><span>Level</span><strong id="levelStat">1 / 6</strong></div>
+      <div class="stat"><span>Clés</span><strong id="keyStat">0 / 6</strong></div>
+      <div class="stat"><span>Points</span><strong id="scoreStat">0</strong></div>
+    </div>
+  </section>
+
+  <section class="game">
+    <div class="story">
+      <div>
+        <h2 id="storyTitle"></h2>
+        <p id="storyText"></p>
+      </div>
+      <div class="scene-icon" id="sceneIcon"></div>
+    </div>
+
+    <div class="content">
+      <div class="progress" id="progress"></div>
+      <div id="levelArea"></div>
+
+      <div class="end" id="end">
+        <div class="big">🏝️🔓</div>
+        <h2>Mission réussie !</h2>
+        <p id="endText"></p>
+        <button class="restart" id="restartBtn">Rejouer</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+const levels = [
+{
+  title:"1. La valise fermée", type:"Choix multiple", icon:"🧳🔐",
+  story:"Der Koffer ist verschlossen. Nur die richtige passé-composé-Form öffnet das erste Fach.",
+  render(){
+    return `
+      <div class="level-head"><div><h3>Choisis la bonne phrase.</h3><p>Welcher Satz ist korrekt?</p></div><span class="type">Choix multiple</span></div>
+      <div class="panel">
+        <div class="question">Hier, j'___ ma valise.</div>
+        <div class="options" id="mcOpts">
+          <button class="choice" data-ok="1">ai préparé</button>
+          <button class="choice">suis préparé</button>
+          <button class="choice">ai préparer</button>
+          <button class="choice">as préparé</button>
+        </div>
+        ${common()}
+      </div>`;
+  },
+  init(){
+    document.querySelectorAll("#mcOpts .choice").forEach(b=>b.addEventListener("click",()=>{
+      lockChoices("#mcOpts .choice");
+      if(b.dataset.ok){b.classList.add("correct");success("Bravo ! J'ai préparé ma valise.");}
+      else{b.classList.add("wrong");document.querySelector('[data-ok="1"]').classList.add("correct");fail("Pas tout à fait. Richtig ist : j'ai préparé.");}
+    }));
+  }
+},
+{
+  title:"2. Le panneau des auxiliaires", type:"Sortieren", icon:"🪧☀️",
+  story:"Zwei Wege führen weiter: AVOIR oder ÊTRE. Sortiere die Verben richtig.",
+  render(){
+    return `
+      <div class="level-head"><div><h3>Classe les verbes.</h3><p>Klicke zuerst ein Verb an und dann auf AVOIR oder ÊTRE.</p></div><span class="type">Tri</span></div>
+      <div class="panel">
+        <div class="chip-row" id="chips">
+          ${["manger","jouer","visiter","aller","arriver","rentrer"].map(v=>`<button class="chip" data-v="${v}">${v}</button>`).join("")}
+        </div>
+        <div class="sort-grid">
+          <div class="bucket"><h4>AVOIR</h4><div class="bucket-items" id="avoirBucket"></div></div>
+          <div class="bucket"><h4>ÊTRE</h4><div class="bucket-items" id="etreBucket"></div></div>
+        </div>
+        <div class="sort-actions">
+          <button class="sort-btn" data-target="avoir">→ AVOIR</button>
+          <button class="sort-btn" data-target="etre">→ ÊTRE</button>
+        </div>
+        <button class="check-btn" id="sortCheck">Vérifier</button>
+        ${common()}
+      </div>`;
+  },
+  init(){
+    let selected=null;
+    document.querySelectorAll(".chip").forEach(c=>c.addEventListener("click",()=>{
+      document.querySelectorAll(".chip").forEach(x=>x.classList.remove("selected"));
+      selected=c; c.classList.add("selected");
+    }));
+    document.querySelectorAll(".sort-btn").forEach(btn=>btn.addEventListener("click",()=>{
+      if(!selected)return;
+      document.getElementById(btn.dataset.target+"Bucket").appendChild(selected);
+      selected.dataset.bucket=btn.dataset.target;
+      selected.classList.remove("selected");selected=null;
+    }));
+    document.getElementById("sortCheck").addEventListener("click",()=>{
+      const key={manger:"avoir",jouer:"avoir",visiter:"avoir",aller:"etre",arriver:"etre",rentrer:"etre"};
+      const chips=[...document.querySelectorAll(".chip")];
+      if(chips.some(c=>!c.dataset.bucket)){fail("Ordne zuerst alle Verben zu.");return;}
+      const ok=chips.every(c=>c.dataset.bucket===key[c.dataset.v]);
+      if(ok) success("Parfait ! manger, jouer, visiter → avoir ; aller, arriver, rentrer → être.");
+      else fail("Noch nicht ganz. Prüfe besonders aller, arriver und rentrer: sie stehen hier mit être.");
+    });
+  }
+},
+{
+  title:"3. La carte postale déchirée", type:"Satzbau", icon:"💌🧩",
+  story:"Eine Postkarte ist in Wortstücke zerfallen. Setze den Satz wieder richtig zusammen.",
+  render(){
+    const words=["Nous","sommes","allés","à","la","plage","."];
+    return `
+      <div class="level-head"><div><h3>Remets la phrase dans l'ordre.</h3><p>Klicke die Wörter in der richtigen Reihenfolge an.</p></div><span class="type">Puzzle</span></div>
+      <div class="panel">
+        <div class="word-bank" id="bank">${shuffle(words).map((w,i)=>`<button class="word" data-word="${w}">${w}</button>`).join("")}</div>
+        <div class="sentence-line" id="sentence"></div>
+        <button class="check-btn" id="sentenceCheck">Vérifier</button>
+        <button class="check-btn" id="sentenceReset" style="background:#718096">Recommencer</button>
+        ${common()}
+      </div>`;
+  },
+  init(){
+    const bank=document.getElementById("bank"), line=document.getElementById("sentence");
+    bank.querySelectorAll(".word").forEach(w=>w.addEventListener("click",()=>line.appendChild(w)));
+    document.getElementById("sentenceReset").addEventListener("click",()=>line.querySelectorAll(".word").forEach(w=>bank.appendChild(w)));
+    document.getElementById("sentenceCheck").addEventListener("click",()=>{
+      const s=[...line.querySelectorAll(".word")].map(w=>w.dataset.word).join(" ");
+      if(s==="Nous sommes allés à la plage .") success("Très bien ! Nous sommes allés à la plage.");
+      else fail("Die Reihenfolge stimmt noch nicht. Achte auf: sujet + auxiliaire + participe passé.");
+    });
+  }
+},
+{
+  title:"4. Le code de l'hôtel", type:"Lücken-Code", icon:"🏨🔢",
+  story:"Die Hoteltür braucht zwei richtige Verbformen. Wähle Hilfsverb und participe passé.",
+  render(){
+    return `
+      <div class="level-head"><div><h3>Complète les phrases.</h3><p>Wähle die passenden Formen aus.</p></div><span class="type">Code</span></div>
+      <div class="panel">
+        <div class="fill-row">
+          <span>Emma</span>
+          <select id="aux1"><option value="">---</option><option>a</option><option>est</option></select>
+          <select id="pp1"><option value="">---</option><option>visité</option><option>visitée</option><option>allée</option></select>
+          <span>Paris.</span>
+        </div>
+        <br>
+        <div class="fill-row">
+          <span>Emma</span>
+          <select id="aux2"><option value="">---</option><option>a</option><option>est</option></select>
+          <select id="pp2"><option value="">---</option><option>allé</option><option>allée</option><option>visité</option></select>
+          <span>à Nice.</span>
+        </div>
+        <button class="check-btn" id="fillCheck">Code prüfen</button>
+        ${common()}
+      </div>`;
+  },
+  init(){
+    document.getElementById("fillCheck").addEventListener("click",()=>{
+      const ok=document.getElementById("aux1").value==="a" &&
+               document.getElementById("pp1").value==="visité" &&
+               document.getElementById("aux2").value==="est" &&
+               document.getElementById("pp2").value==="allée";
+      if(ok) success("Code correct ! Emma a visité Paris. Emma est allée à Nice.");
+      else fail("Prüfe: visiter → avoir; aller → être. Bei Emma braucht allée ein -e.");
+    });
+  }
+},
+{
+  title:"5. Le détective du camping", type:"Fehlerdetektiv", icon:"🔎⛺",
+  story:"Auf dem Campingplatz ist ein falscher Satz versteckt. Finde ihn.",
+  render(){
+    return `
+      <div class="level-head"><div><h3>Trouve la phrase fausse.</h3><p>Welcher Satz enthält einen Fehler?</p></div><span class="type">Détective</span></div>
+      <div class="panel detective" id="detective">
+        <button class="choice">Nous avons mangé une glace.</button>
+        <button class="choice">Léo est arrivé au camping.</button>
+        <button class="choice" data-ok="1">Marie a allée à la plage.</button>
+        <button class="choice">Ils ont joué au foot.</button>
+        ${common()}
+      </div>`;
+  },
+  init(){
+    document.querySelectorAll("#detective>.choice").forEach(b=>b.addEventListener("click",()=>{
+      lockChoices("#detective>.choice");
+      if(b.dataset.ok){b.classList.add("correct");success("Exact ! Richtig wäre : Marie est allée à la plage.");}
+      else{b.classList.add("wrong");document.querySelector("#detective [data-ok='1']").classList.add("correct");fail("Dieser Satz ist korrekt. Der Fehler steckt bei aller.");}
+    }));
+  }
+},
+{
+  title:"6. Le coffre des vacances", type:"Finale", icon:"🗝️🏖️",
+  story:"Vier letzte Hinweise öffnen den Ferien-Tresor. Löse alle Mini-Aufgaben.",
+  render(){
+    return `
+      <div class="level-head"><div><h3>Résous les quatre énigmes.</h3><p>Alle vier Antworten müssen stimmen.</p></div><span class="type">Finale</span></div>
+      <div class="panel">
+        <div class="final-grid">
+          <div class="mini-card"><label>1. Nous ___ au restaurant.</label>
+            <select id="f1"><option></option><option>avons mangé</option><option>sommes mangé</option></select>
+          </div>
+          <div class="mini-card"><label>2. Léa ___ à Paris.</label>
+            <select id="f2"><option></option><option>a allé</option><option>est allée</option></select>
+          </div>
+          <div class="mini-card"><label>3. Ils ___ des photos.</label>
+            <select id="f3"><option></option><option>ont pris</option><option>sont pris</option></select>
+          </div>
+          <div class="mini-card"><label>4. Paul et Tom ___ à la maison.</label>
+            <select id="f4"><option></option><option>ont rentré</option><option>sont rentrés</option></select>
+          </div>
+        </div>
+        <button class="check-btn" id="finalCheck">Coffre öffnen</button>
+        ${common()}
+      </div>`;
+  },
+  init(){
+    document.getElementById("finalCheck").addEventListener("click",()=>{
+      const ok=document.getElementById("f1").value==="avons mangé" &&
+               document.getElementById("f2").value==="est allée" &&
+               document.getElementById("f3").value==="ont pris" &&
+               document.getElementById("f4").value==="sont rentrés";
+      if(ok) success("Fantastique ! Alle vier Lösungen sind richtig.");
+      else fail("Mindestens eine Lösung stimmt noch nicht. Prüfe avoir/être und die Endungen bei être.");
+    });
+  }
+}];
+
+let level=0, keys=0, score=0, solved=false;
+
+const levelArea=document.getElementById("levelArea");
+const storyTitle=document.getElementById("storyTitle");
+const storyText=document.getElementById("storyText");
+const sceneIcon=document.getElementById("sceneIcon");
+const levelStat=document.getElementById("levelStat");
+const keyStat=document.getElementById("keyStat");
+const scoreStat=document.getElementById("scoreStat");
+const progress=document.getElementById("progress");
+const end=document.getElementById("end");
+const endText=document.getElementById("endText");
+
+function common(){
+  return `<div class="feedback" id="feedback" aria-live="polite"></div>
+          <div class="key" id="keyBox"></div>
+          <button class="next" id="nextBtn">${level===levels.length-1?"Mission beenden":"Nächstes Level"}</button>`;
+}
+
+function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function lockChoices(sel){document.querySelectorAll(sel).forEach(b=>b.disabled=true)}
+
+function renderProgress(){
+  progress.innerHTML=levels.map((_,i)=>`<div class="step ${i<level?"done":""} ${i===level?"active":""}">Level ${i+1}</div>`).join("");
+}
+
+function showLevel(){
+  solved=false;
+  const L=levels[level];
+  storyTitle.textContent=L.title;
+  storyText.textContent=L.story;
+  sceneIcon.textContent=L.icon;
+  levelStat.textContent=`${level+1} / ${levels.length}`;
+  keyStat.textContent=`${keys} / ${levels.length}`;
+  scoreStat.textContent=score;
+  renderProgress();
+  levelArea.innerHTML=L.render();
+  L.init();
+  document.getElementById("nextBtn").addEventListener("click",nextLevel);
+}
+
+function success(msg){
+  if(solved)return;
+  solved=true;
+  keys++; score+=10;
+  keyStat.textContent=`${keys} / ${levels.length}`;
+  scoreStat.textContent=score;
+  const f=document.getElementById("feedback");
+  f.className="feedback good"; f.textContent=msg;
+  const k=document.getElementById("keyBox");
+  k.style.display="block"; k.textContent=`🔑 Clé ${keys} gagnée !`;
+  document.getElementById("nextBtn").style.display="inline-block";
+}
+function fail(msg){
+  const f=document.getElementById("feedback");
+  f.className="feedback bad"; f.textContent=msg;
+}
+function nextLevel(){
+  if(!solved)return;
+  level++;
+  if(level>=levels.length)finish();
+  else showLevel();
+}
+function finish(){
+  levelArea.style.display="none"; progress.style.display="none"; end.style.display="block";
+  storyTitle.textContent="Le coffre est ouvert !"; storyText.textContent="Du hast alle Ferienrätsel gelöst.";
+  levelStat.textContent=`6 / 6`; keyStat.textContent=`${keys} / 6`; scoreStat.textContent=score;
+  endText.innerHTML=`Du hast <strong>${keys} Schlüssel</strong> und <strong>${score} Punkte</strong> gesammelt. Bravo !`;
+}
+document.getElementById("restartBtn").addEventListener("click",()=>{
+  level=0;keys=0;score=0;solved=false;
+  levelArea.style.display="block";progress.style.display="grid";end.style.display="none";
+  showLevel();
+});
+showLevel();
+</script>
+</body>
+</html>
