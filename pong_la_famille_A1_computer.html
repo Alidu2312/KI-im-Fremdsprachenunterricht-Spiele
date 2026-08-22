@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pong – La famille A1</title>
+  <style>
+    :root{
+      --bg:#07111f;
+      --panel:#0d1b2a;
+      --panel2:#12263a;
+      --line:#29445f;
+      --text:#f8fafc;
+      --muted:#9fb3c8;
+      --accent:#4cc9f0;
+      --accent2:#ffd166;
+      --good:#2ecc71;
+      --bad:#ef476f;
+      --white:#ffffff;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      min-height:100vh;
+      font-family:Inter,Segoe UI,Arial,sans-serif;
+      background:
+        radial-gradient(circle at 20% 10%, rgba(76,201,240,.12), transparent 28rem),
+        radial-gradient(circle at 80% 0%, rgba(255,209,102,.10), transparent 24rem),
+        linear-gradient(180deg,#06101c,#0a1625);
+      color:var(--text);
+      display:flex;
+      justify-content:center;
+      padding:20px;
+    }
+
+    .app{width:min(980px,100%)}
+
+    .header{
+      display:grid;
+      grid-template-columns:1fr auto 1fr;
+      gap:14px;
+      align-items:center;
+      margin-bottom:14px;
+    }
+
+    .score-card,.center-card{
+      background:rgba(255,255,255,.05);
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:14px 18px;
+      box-shadow:0 10px 30px rgba(0,0,0,.18);
+      backdrop-filter:blur(3px);
+    }
+
+    .score-card.right{text-align:right}
+    .label{
+      color:var(--muted);
+      text-transform:uppercase;
+      letter-spacing:.08em;
+      font-size:.78rem;
+      font-weight:800;
+    }
+
+    .score{
+      font-size:2.3rem;
+      line-height:1;
+      color:var(--accent2);
+      font-weight:900;
+      margin-top:4px;
+    }
+
+    .center-card{
+      text-align:center;
+      padding:10px 18px;
+    }
+    .center-card h1{margin:0;font-size:1.65rem}
+    .center-card p{margin:4px 0 0;color:var(--muted);font-size:.9rem}
+
+    .game-shell{
+      position:relative;
+      border:2px solid var(--line);
+      border-radius:22px;
+      overflow:hidden;
+      background:#02060c;
+      box-shadow:0 20px 55px rgba(0,0,0,.38);
+    }
+
+    canvas{
+      display:block;
+      width:100%;
+      height:auto;
+      background:#02060c;
+    }
+
+    .hud{
+      display:flex;
+      justify-content:space-between;
+      gap:14px;
+      flex-wrap:wrap;
+      margin-top:12px;
+      color:var(--muted);
+      font-size:.9rem;
+    }
+    .hud strong{color:var(--text)}
+
+    .overlay{
+      position:absolute;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+      background:rgba(2,6,12,.82);
+    }
+    .overlay.show{display:flex}
+
+    .modal{
+      width:min(570px,96%);
+      background:var(--white);
+      color:#102030;
+      border-radius:24px;
+      padding:28px;
+      text-align:center;
+      box-shadow:0 24px 70px rgba(0,0,0,.45);
+    }
+
+    .modal h2{
+      margin:0 0 12px;
+      font-size:1.8rem;
+    }
+
+    .modal p{
+      margin:8px 0;
+      color:#526273;
+      line-height:1.45;
+    }
+
+    .question-label{
+      display:inline-block;
+      margin-bottom:10px;
+      padding:6px 10px;
+      border-radius:999px;
+      background:#e8f7fc;
+      color:#12627a;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+      font-size:.78rem;
+      font-weight:900;
+    }
+
+    .question{
+      font-size:1.55rem;
+      line-height:1.35;
+      font-weight:900;
+      margin:0 0 20px;
+    }
+
+    .answers{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+    }
+
+    button{
+      border:0;
+      border-radius:16px;
+      font:inherit;
+      font-weight:900;
+      cursor:pointer;
+      transition:transform .12s ease,filter .12s ease;
+    }
+    button:hover{transform:translateY(-1px);filter:brightness(1.02)}
+    button:active{transform:translateY(1px)}
+
+    .answer-btn{
+      padding:16px;
+      font-size:1.08rem;
+    }
+    .vrai{background:#dcfce7;color:#166534}
+    .faux{background:#ffe1e8;color:#a61b46}
+
+    .primary{
+      margin-top:16px;
+      padding:14px 22px;
+      background:var(--accent);
+      color:#06384a;
+    }
+
+    .feedback{
+      min-height:48px;
+      margin-top:16px;
+      padding:12px 14px;
+      border-radius:14px;
+      font-weight:900;
+      display:none;
+    }
+    .feedback.good{
+      display:block;
+      background:#e9fbf1;
+      color:#146c43;
+      border:1px solid #b8ebcb;
+    }
+    .feedback.bad{
+      display:block;
+      background:#fff0f4;
+      color:#9b2147;
+      border:1px solid #f3c0cf;
+    }
+
+    .winner{
+      font-size:1.2rem;
+      font-weight:900;
+      color:#102030;
+      margin:8px 0 4px;
+    }
+
+    .keys{
+      display:inline-flex;
+      gap:6px;
+      align-items:center;
+      margin-left:6px;
+    }
+    .key{
+      min-width:32px;
+      padding:4px 8px;
+      border-radius:8px;
+      background:#16283b;
+      border:1px solid #36506a;
+      color:#fff;
+      text-align:center;
+      font-weight:900;
+    }
+
+    @media(max-width:720px){
+      body{padding:10px}
+      .header{grid-template-columns:1fr 1fr}
+      .center-card{grid-column:1/-1;grid-row:1}
+      .score-card{grid-row:2}
+      .answers{grid-template-columns:1fr}
+      .question{font-size:1.28rem}
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="header">
+      <div class="score-card">
+        <div class="label">Élève</div>
+        <div class="score" id="playerScore">0</div>
+      </div>
+
+      <div class="center-card">
+        <h1>Pong – La famille</h1>
+        <p>Français A1 · Premier à 10 points</p>
+      </div>
+
+      <div class="score-card right">
+        <div class="label">Ordinateur</div>
+        <div class="score" id="cpuScore">0</div>
+      </div>
+    </section>
+
+    <section class="game-shell">
+      <canvas id="pong" width="900" height="520"></canvas>
+
+      <div class="overlay show" id="startOverlay">
+        <div class="modal">
+          <h2>Pong – La famille</h2>
+          <p>Spiele gegen den Computer. Nach jedem Punkt kommt eine kurze <strong>Vrai/Faux-Frage</strong>.</p>
+          <p><strong>Steuerung:</strong> <span class="keys"><span class="key">↑</span><span class="key">↓</span></span></p>
+          <button class="primary" id="startBtn" type="button">Commencer</button>
+        </div>
+      </div>
+
+      <div class="overlay" id="quizOverlay">
+        <div class="modal">
+          <span class="question-label">Vrai ou faux ?</span>
+          <div class="question" id="questionText"></div>
+          <div class="answers">
+            <button class="answer-btn vrai" id="vraiBtn" type="button">Vrai</button>
+            <button class="answer-btn faux" id="fauxBtn" type="button">Faux</button>
+          </div>
+          <div class="feedback" id="feedback" aria-live="polite"></div>
+        </div>
+      </div>
+
+      <div class="overlay" id="endOverlay">
+        <div class="modal">
+          <h2>Partie terminée !</h2>
+          <div class="winner" id="winnerText"></div>
+          <p id="finalScore"></p>
+          <button class="primary" id="restartBtn" type="button">Rejouer</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="hud">
+      <div><strong>Steuerung:</strong> <span class="keys"><span class="key">↑</span><span class="key">↓</span></span></div>
+      <div><strong>Ziel:</strong> 10 Punkte</div>
+      <div><strong>Nach jedem Punkt:</strong> Vrai/Faux</div>
+    </div>
+  </main>
+
+<script>
+const canvas = document.getElementById("pong");
+const ctx = canvas.getContext("2d");
+
+const playerScoreEl = document.getElementById("playerScore");
+const cpuScoreEl = document.getElementById("cpuScore");
+const startOverlay = document.getElementById("startOverlay");
+const quizOverlay = document.getElementById("quizOverlay");
+const endOverlay = document.getElementById("endOverlay");
+const questionText = document.getElementById("questionText");
+const feedback = document.getElementById("feedback");
+const winnerText = document.getElementById("winnerText");
+const finalScore = document.getElementById("finalScore");
+const vraiBtn = document.getElementById("vraiBtn");
+const fauxBtn = document.getElementById("fauxBtn");
+const startBtn = document.getElementById("startBtn");
+const restartBtn = document.getElementById("restartBtn");
+
+const questions = [
+  {q:"Le frère de mon père, c'est mon oncle.", a:true, correction:"Le frère de mon père, c'est mon oncle."},
+  {q:"La sœur de ma mère, c'est ma tante.", a:true, correction:"La sœur de ma mère, c'est ma tante."},
+  {q:"Le père de mon père, c'est mon grand-père.", a:true, correction:"Le père de mon père, c'est mon grand-père."},
+  {q:"La mère de ma mère, c'est ma grand-mère.", a:true, correction:"La mère de ma mère, c'est ma grand-mère."},
+  {q:"Le frère de ma mère, c'est mon cousin.", a:false, correction:"Le frère de ma mère, c'est mon oncle."},
+  {q:"La sœur de mon père, c'est ma cousine.", a:false, correction:"La sœur de mon père, c'est ma tante."},
+  {q:"Le père de ma mère, c'est mon oncle.", a:false, correction:"Le père de ma mère, c'est mon grand-père."},
+  {q:"La mère de mon père, c'est ma tante.", a:false, correction:"La mère de mon père, c'est ma grand-mère."},
+  {q:"Le fils de mon oncle, c'est mon cousin.", a:true, correction:"Le fils de mon oncle, c'est mon cousin."},
+  {q:"La fille de ma tante, c'est ma cousine.", a:true, correction:"La fille de ma tante, c'est ma cousine."},
+  {q:"Le fils de ma tante, c'est mon frère.", a:false, correction:"Le fils de ma tante, c'est mon cousin."},
+  {q:"La fille de mon oncle, c'est ma sœur.", a:false, correction:"La fille de mon oncle, c'est ma cousine."},
+  {q:"Le père de mon père, c'est mon grand-père.", a:true, correction:"Le père de mon père, c'est mon grand-père."},
+  {q:"La mère de mon père, c'est ma grand-mère.", a:true, correction:"La mère de mon père, c'est ma grand-mère."},
+  {q:"Le frère de mon père, c'est mon grand-père.", a:false, correction:"Le frère de mon père, c'est mon oncle."},
+  {q:"La sœur de ma mère, c'est ma grand-mère.", a:false, correction:"La sœur de ma mère, c'est ma tante."}
+];
+
+const paddleW = 16;
+const paddleH = 96;
+const playerSpeed = 7.2;
+const cpuMaxSpeed = 4.5;
+
+let player, cpu, ball;
+let playerScore = 0;
+let cpuScore = 0;
+let upPressed = false;
+let downPressed = false;
+let running = false;
+let paused = true;
+let currentQuestion = null;
+let usedQuestions = [];
+
+function resetPositions(direction = Math.random() > .5 ? 1 : -1){
+  player = {x:28, y:canvas.height/2-paddleH/2};
+  cpu = {x:canvas.width-44, y:canvas.height/2-paddleH/2};
+  ball = {
+    x:canvas.width/2,
+    y:canvas.height/2,
+    r:10,
+    vx:5.2*direction,
+    vy:(Math.random()*3.4)-1.7
+  };
+}
+
+function draw(){
+  ctx.fillStyle="#02060c";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  ctx.strokeStyle="#19324a";
+  ctx.lineWidth=4;
+  ctx.setLineDash([14,16]);
+  ctx.beginPath();
+  ctx.moveTo(canvas.width/2,0);
+  ctx.lineTo(canvas.width/2,canvas.height);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.strokeStyle="#183048";
+  ctx.lineWidth=3;
+  ctx.strokeRect(2,2,canvas.width-4,canvas.height-4);
+
+  ctx.fillStyle="#f8fafc";
+  ctx.fillRect(player.x,player.y,paddleW,paddleH);
+
+  ctx.fillStyle="#ffd166";
+  ctx.fillRect(cpu.x,cpu.y,paddleW,paddleH);
+
+  ctx.beginPath();
+  ctx.arc(ball.x,ball.y,ball.r,0,Math.PI*2);
+  ctx.fillStyle="#4cc9f0";
+  ctx.fill();
+}
+
+function updatePlayer(){
+  if(upPressed) player.y -= playerSpeed;
+  if(downPressed) player.y += playerSpeed;
+  player.y = Math.max(0,Math.min(canvas.height-paddleH,player.y));
+}
+
+function updateCPU(){
+  const target = ball.y - paddleH/2;
+  const diff = target - cpu.y;
+  let move = Math.max(-cpuMaxSpeed, Math.min(cpuMaxSpeed, diff*0.085));
+
+  // leichte Ungenauigkeit: Computer reagiert nicht perfekt
+  if(Math.random() < 0.035) move *= 0.35;
+
+  cpu.y += move;
+  cpu.y = Math.max(0,Math.min(canvas.height-paddleH,cpu.y));
+}
+
+function intersects(p){
+  return ball.x+ball.r > p.x &&
+         ball.x-ball.r < p.x+paddleW &&
+         ball.y+ball.r > p.y &&
+         ball.y-ball.r < p.y+paddleH;
+}
+
+function updateBall(){
+  ball.x += ball.vx;
+  ball.y += ball.vy;
+
+  if(ball.y-ball.r <= 0){
+    ball.y = ball.r;
+    ball.vy *= -1;
+  }
+  if(ball.y+ball.r >= canvas.height){
+    ball.y = canvas.height-ball.r;
+    ball.vy *= -1;
+  }
+
+  if(ball.vx < 0 && intersects(player)){
+    ball.x = player.x+paddleW+ball.r;
+    ball.vx = Math.abs(ball.vx)+0.12;
+    const hit=(ball.y-(player.y+paddleH/2))/(paddleH/2);
+    ball.vy = hit*5.4;
+  }
+
+  if(ball.vx > 0 && intersects(cpu)){
+    ball.x = cpu.x-ball.r;
+    ball.vx = -(Math.abs(ball.vx)+0.1);
+    const hit=(ball.y-(cpu.y+paddleH/2))/(paddleH/2);
+    ball.vy = hit*5.0;
+  }
+
+  if(ball.x < -30){
+    scorePoint("cpu");
+  } else if(ball.x > canvas.width+30){
+    scorePoint("player");
+  }
+}
+
+function scorePoint(side){
+  running=false;
+  paused=true;
+
+  if(side==="player"){
+    playerScore++;
+    playerScoreEl.textContent=playerScore;
+  }else{
+    cpuScore++;
+    cpuScoreEl.textContent=cpuScore;
+  }
+
+  if(playerScore>=10 || cpuScore>=10){
+    showEnd();
+    return;
+  }
+
+  showQuestion();
+}
+
+function getQuestion(){
+  if(usedQuestions.length >= questions.length) usedQuestions=[];
+  const available = questions
+    .map((q,i)=>({q,i}))
+    .filter(item=>!usedQuestions.includes(item.i));
+
+  const pick = available[Math.floor(Math.random()*available.length)];
+  usedQuestions.push(pick.i);
+  return pick.q;
+}
+
+function showQuestion(){
+  currentQuestion = getQuestion();
+  questionText.textContent=currentQuestion.q;
+  feedback.className="feedback";
+  feedback.textContent="";
+  vraiBtn.disabled=false;
+  fauxBtn.disabled=false;
+  quizOverlay.classList.add("show");
+}
+
+function answerQuestion(choice){
+  vraiBtn.disabled=true;
+  fauxBtn.disabled=true;
+
+  if(choice===currentQuestion.a){
+    feedback.className="feedback good";
+    feedback.textContent="Bravo ! Bonne réponse.";
+  }else{
+    feedback.className="feedback bad";
+    feedback.textContent="Faux. " + currentQuestion.correction;
+  }
+
+  setTimeout(()=>{
+    quizOverlay.classList.remove("show");
+    resetPositions(Math.random()>.5?1:-1);
+    paused=false;
+    running=true;
+  },1100);
+}
+
+function showEnd(){
+  paused=true;
+  running=false;
+  endOverlay.classList.add("show");
+
+  if(playerScore>=10){
+    winnerText.textContent="Bravo ! Tu as gagné !";
+  }else{
+    winnerText.textContent="L'ordinateur a gagné.";
+  }
+  finalScore.textContent=`Score final : ${playerScore} – ${cpuScore}`;
+}
+
+function loop(){
+  if(running && !paused){
+    updatePlayer();
+    updateCPU();
+    updateBall();
+  }
+  draw();
+  requestAnimationFrame(loop);
+}
+
+window.addEventListener("keydown",e=>{
+  if(e.key==="ArrowUp"){
+    upPressed=true;
+    e.preventDefault();
+  }
+  if(e.key==="ArrowDown"){
+    downPressed=true;
+    e.preventDefault();
+  }
+});
+
+window.addEventListener("keyup",e=>{
+  if(e.key==="ArrowUp"){
+    upPressed=false;
+    e.preventDefault();
+  }
+  if(e.key==="ArrowDown"){
+    downPressed=false;
+    e.preventDefault();
+  }
+});
+
+startBtn.addEventListener("click",()=>{
+  playerScore=0;
+  cpuScore=0;
+  playerScoreEl.textContent="0";
+  cpuScoreEl.textContent="0";
+  usedQuestions=[];
+  startOverlay.classList.remove("show");
+  resetPositions();
+  paused=false;
+  running=true;
+});
+
+restartBtn.addEventListener("click",()=>{
+  endOverlay.classList.remove("show");
+  playerScore=0;
+  cpuScore=0;
+  playerScoreEl.textContent="0";
+  cpuScoreEl.textContent="0";
+  usedQuestions=[];
+  resetPositions();
+  paused=false;
+  running=true;
+});
+
+vraiBtn.addEventListener("click",()=>answerQuestion(true));
+fauxBtn.addEventListener("click",()=>answerQuestion(false));
+
+resetPositions();
+loop();
+</script>
+</body>
+</html>
