@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Après-midi libre à Paris !</title>
+<style>
+  :root{
+    --cream:#FFF8ED;
+    --navy:#1D3557;
+    --red:#E63946;
+    --red-dark:#C1121F;
+    --blue:#3DA9DC;
+    --blue-dark:#1E7BA8;
+    --yellow:#FFD166;
+    --green-dark:#04966C;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    min-height:100vh;
+    background:
+      radial-gradient(circle at 15% 0%, #bfe6fb 0%, transparent 40%),
+      radial-gradient(circle at 90% 15%, #ffe3ee 0%, transparent 35%),
+      linear-gradient(180deg, #EAF6FF 0%, var(--cream) 55%);
+    font-family:Verdana,'Segoe UI',Arial,sans-serif;
+    color:var(--navy);
+    display:flex;
+    justify-content:center;
+    padding:18px 10px 50px;
+  }
+  #app{width:100%;max-width:780px;}
+  .hidden{display:none !important;}
+  .skyline{text-align:center;margin-bottom:10px;opacity:.9;}
+
+  .card{
+    position:relative;
+    background:#fff;
+    border-radius:26px;
+    padding:26px 24px 24px;
+    box-shadow:0 14px 0 rgba(29,53,87,.08), 0 18px 34px rgba(29,53,87,.15);
+    margin-bottom:18px;
+    border:4px solid var(--accent, var(--navy));
+  }
+  .chip{
+    display:inline-block;
+    font-weight:800;
+    font-size:.72rem;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    color:#fff;
+    background:var(--accent, var(--navy));
+    padding:5px 14px;
+    border-radius:999px;
+    margin-bottom:10px;
+  }
+  h1{font-size:1.6rem;font-weight:800;color:var(--navy);margin:6px 0 8px;}
+  h2{font-size:1.25rem;font-weight:800;color:var(--navy);margin:0 0 10px;}
+  h3{font-size:1.05rem;font-weight:800;color:var(--navy);margin:16px 0 6px;}
+  p{line-height:1.55;}
+  .bubble{margin:14px 0;padding:12px 14px;background:#F5F9FF;border:2px dashed var(--blue);border-radius:16px;}
+  .bubble.warn{background:#FFF3E0;border-color:var(--yellow);}
+
+  #trail{display:flex;justify-content:center;gap:8px;margin:6px 0 20px;flex-wrap:wrap;}
+  .macaron{
+    width:38px;height:38px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    background:#fff;border:3px solid #d8d8d8;
+    font-weight:800;color:transparent;
+    box-shadow:0 3px 0 rgba(0,0,0,.08);
+    transition:all .4s ease;
+  }
+  .macaron.solved{
+    transform:scale(1.15) rotate(-4deg);
+    box-shadow:0 4px 10px rgba(0,0,0,.2);
+    background:var(--accent); border-color:var(--accent); color:#fff;
+  }
+
+  button{
+    font-weight:800;font-size:.9rem;background:var(--navy);color:#fff;border:none;
+    padding:11px 20px;border-radius:999px;cursor:pointer;margin:5px 6px 5px 0;
+    box-shadow:0 4px 0 rgba(0,0,0,.2);transition:transform .12s ease;
+  }
+  button:hover{transform:translateY(-2px);}
+  button:active{transform:translateY(1px);box-shadow:0 2px 0 rgba(0,0,0,.2);}
+  button.secondary{background:#fff;color:var(--navy);border:2px solid var(--navy);box-shadow:none;}
+  button.go{background:var(--green-dark);}
+  button.final{background:var(--red);}
+  button.word{background:#fff;color:var(--navy);border:2px solid var(--navy);box-shadow:none;padding:8px 14px;font-size:.88rem;}
+  button.word:disabled{opacity:.3;cursor:default;transform:none;}
+  select, input[type=text]{
+    font-family:'Courier New',monospace;font-size:1rem;padding:8px 12px;
+    border:2px solid var(--navy);border-radius:10px;background:#fff;margin:3px 4px;
+  }
+  .row{margin:12px 0;padding:12px 14px;background:#FAFAFA;border-radius:14px;border:2px solid #eee;}
+  .feedback{margin-top:12px;font-weight:800;min-height:1.4em;}
+  .feedback.ok{color:var(--green-dark);}
+  .feedback.no{color:var(--red-dark);}
+  .hint-box{margin-top:10px;background:#FFF9E5;border:2px dashed var(--yellow);padding:10px 14px;border-radius:14px;font-size:.92rem;}
+  .hint-box b{color:var(--red-dark);}
+  .diagram{display:flex;justify-content:center;margin:14px 0;overflow-x:auto;}
+  .icon-grid{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin:14px 0;}
+  .icon-choice{
+    width:130px;text-align:center;cursor:pointer;background:#fff;border:3px solid #ddd;
+    border-radius:18px;padding:12px 6px 10px;font-weight:700;transition:transform .15s;
+  }
+  .icon-choice:hover{transform:translateY(-3px);border-color:var(--navy);}
+  .icon-choice.correct{border-color:var(--green-dark);background:#EAF9F3;}
+  .icon-choice.wrong{border-color:var(--red-dark);background:#FDEDEE;}
+  table.menu{width:100%;border-collapse:collapse;margin:14px 0;font-family:'Courier New',monospace;}
+  table.menu td{padding:7px 8px;border-bottom:2px dotted #ddd;}
+  table.menu td:last-child{text-align:right;font-weight:700;}
+  .builder{min-height:2.6em;padding:10px 12px;background:#F5F9FF;border:2px solid var(--blue);border-radius:12px;margin:10px 0;font-weight:700;}
+  .cert{text-align:center;padding:16px;background:#FFFDF6;border-radius:18px;border:3px dashed var(--yellow);}
+  .cert input{width:60%;text-align:center;font-size:1.15rem;font-weight:700;}
+  footer.note{color:#5b7a9c;text-align:center;font-size:.78rem;margin-top:6px;}
+  @media print{
+    body *{visibility:hidden;}
+    #cert-area, #cert-area *{visibility:visible;}
+    #cert-area{position:absolute;top:0;left:0;width:100%;}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div class="skyline">
+    <svg width="140" height="46" viewBox="0 0 140 46">
+      <polygon points="70,4 58,40 46,46 94,46 82,40" fill="none" stroke="#1D3557" stroke-width="3"/>
+      <line x1="52" y1="30" x2="88" y2="30" stroke="#1D3557" stroke-width="2"/>
+      <line x1="58" y1="18" x2="82" y2="18" stroke="#1D3557" stroke-width="2"/>
+    </svg>
+  </div>
+
+  <!-- ===================== INTRO ===================== -->
+  <div class="screen card" id="screen-intro" style="--accent:#1D3557">
+    <div class="chip">Sortie scolaire — temps libre</div>
+    <h1>🥐 Après-midi libre à Paris !</h1>
+    <p>Toi et tes <b>deux amis</b> avez un après-midi de temps libre à Paris. 🎒</p>
+    <div class="bubble warn"><b>📍 Rendez-vous à 17h00, devant la Tour Eiffel, avec toute la classe !</b></div>
+    <p>Résolvez les <b>9 énigmes</b> : vocabulaire, culture, grammaire et un peu de calcul. Certaines sont difficiles — bon courage !</p>
+    <div class="bubble">
+      🍬 Chaque énigme vous donne une <b>lettre</b>. Notez-les dans l'ordre : elles forment un mot de 9 lettres.<br>
+      💡 Bloqués ? Cliquez sur <b>Aide</b> pour une explication en allemand.
+    </div>
+    <button class="go" onclick="goTo('screen-game')">🚶‍♀️🚶 On y va !</button>
+  </div>
+
+  <!-- ===================== GAME WRAPPER ===================== -->
+  <div class="screen hidden" id="screen-game">
+
+    <div id="trail">
+      <div class="macaron" id="gem-0" style="--accent:#E6A24A"><span>C</span></div>
+      <div class="macaron" id="gem-1" style="--accent:#2EC4B6"><span>R</span></div>
+      <div class="macaron" id="gem-2" style="--accent:#3DA9DC"><span>O</span></div>
+      <div class="macaron" id="gem-3" style="--accent:#FF6F91"><span>I</span></div>
+      <div class="macaron" id="gem-4" style="--accent:#06D6A0"><span>S</span></div>
+      <div class="macaron" id="gem-5" style="--accent:#9D6FE0"><span>S</span></div>
+      <div class="macaron" id="gem-6" style="--accent:#FF8C42"><span>A</span></div>
+      <div class="macaron" id="gem-7" style="--accent:#5B8BE2"><span>N</span></div>
+      <div class="macaron" id="gem-8" style="--accent:#E63946"><span>T</span></div>
+    </div>
+
+    <!-- ---------- PUZZLE 1 : LA BOULANGERIE ---------- -->
+    <div class="screen card puzzle" id="puzzle-1" style="--accent:#E6A24A">
+      <div class="chip">Énigme 1 / 9 · Boulangerie</div>
+      <h2>🥖 Bonjour, vous désirez ?</h2>
+      <p>Complétez le dialogue à la boulangerie avec les bonnes formules de politesse (<b>Redemittel</b>) :</p>
+      <div class="row">
+        La boulangère : « Bonjour ! Vous désirez ? »<br>
+        Le client : « Bonjour,
+        <select id="q1a"><option value="">--</option><option value="je voudrais">je voudrais</option><option value="je veux">je veux</option><option value="j'aime">j'aime</option></select>
+        une baguette et deux croissants, s'il vous plaît. »<br>
+        La boulangère : « Voilà. Ça fait 3,80 €. »<br>
+        Le client : «
+        <select id="q1b"><option value="">--</option><option value="Voici">Voici</option><option value="Voilà, ici">Voilà, ici</option><option value="C'est ça">C'est ça</option></select>
+        5 euros. »<br>
+        La boulangère : « Merci, et voici votre monnaie. »<br>
+        Le client : «
+        <select id="q1c"><option value="">--</option><option value="Merci, au revoir !">Merci, au revoir !</option><option value="Merci, bonjour !">Merci, bonjour !</option><option value="Pardon, bonsoir !">Pardon, bonsoir !</option></select>
+        »
+      </div>
+      <p>Un croissant coûte combien ? (baguette = 1,20 € ; total pour 1 baguette + 2 croissants = 3,80 €)</p>
+      <input type="text" id="q1d" placeholder="…,.. €">
+      <button onclick="check1()">Vérifier</button>
+      <div class="feedback" id="fb-1"></div>
+      <div class="hint-box hidden" id="hint-1"><b>Hilfe (DE):</b> "je voudrais" ist die höfliche Bestellform (nicht "je veux"). Für den Preis: 3,80 € − 1,20 € = 2,60 € für 2 Croissants → durch 2 teilen.</div>
+      <button class="secondary" onclick="toggleHint(1)">💡 Aide / Hilfe</button>
+      <button id="next-1" class="go hidden" onclick="goToPuzzle(2)">Énigme suivante ➜</button>
+    </div>
+
+    <!-- ---------- PUZZLE 2 : CULTURE GÉNÉRALE PARIS ---------- -->
+    <div class="screen card puzzle hidden" id="puzzle-2" style="--accent:#2EC4B6">
+      <div class="chip">Énigme 2 / 9 · Culture générale</div>
+      <h2>🇫🇷 Que savez-vous de Paris ?</h2>
+      <div class="row">1. Quel fleuve traverse Paris ?
+        <select id="q2a"><option value="">--</option><option value="la Seine">la Seine</option><option value="la Loire">la Loire</option><option value="le Rhône">le Rhône</option></select>
+      </div>
+      <div class="row">2. Combien d'arrondissements y a-t-il à Paris ?
+        <select id="q2b"><option value="">--</option><option value="10">10</option><option value="20">20</option><option value="30">30</option></select>
+      </div>
+      <div class="row">3. Comment s'appelle le palais où travaille le président de la République ?
+        <select id="q2c"><option value="">--</option><option value="le palais de l'Élysée">le palais de l'Élysée</option><option value="le palais du Luxembourg">le palais du Luxembourg</option><option value="le Palais-Royal">le Palais-Royal</option></select>
+      </div>
+      <div class="row">4. En quelle année la tour Eiffel a-t-elle été construite ?
+        <select id="q2d"><option value="">--</option><option value="1889">1889</option><option value="1950">1950</option><option value="1789">1789</option></select>
+      </div>
+      <button onclick="check2()">Vérifier</button>
+      <div class="feedback" id="fb-2"></div>
+      <div class="hint-box hidden" id="hint-2"><b>Hilfe (DE):</b> Paris hat 20 Arrondissements (Stadtbezirke). Der Eiffelturm wurde 1889 zur Weltausstellung gebaut. Der Präsident arbeitet im Élysée-Palast.</div>
+      <button class="secondary" onclick="toggleHint(2)">💡 Aide / Hilfe</button>
+      <button id="next-2" class="go hidden" onclick="goToPuzzle(3)">Énigme suivante ➜</button>
+    </div>
+
+    <!-- ---------- PUZZLE 3 : LE MÉTRO (avec correspondance) ---------- -->
+    <div class="screen card puzzle hidden" id="puzzle-3" style="--accent:#3DA9DC">
+      <div class="chip">Énigme 3 / 9 · Métro</div>
+      <h2>🚇 Un trajet avec correspondance</h2>
+      <p>Vous êtes à la station <b>Bastille</b>. Vous prenez la <b>ligne 1</b>, direction <b>La Défense</b>. À <b>Châtelet</b>, vous changez (= correspondance) et vous prenez la <b>ligne 4</b>, direction <b>Porte de Clignancourt</b>. Vous descendez à la <b>2<sup>e</sup> station après Châtelet</b>.</p>
+      <div class="diagram">
+        <svg width="480" height="150" viewBox="0 0 480 150">
+          <line x1="30" y1="35" x2="330" y2="35" stroke="#FFCE00" stroke-width="7" stroke-linecap="round"/>
+          <text x="30" y="15" font-size="11" fill="#7a6200" font-weight="bold">Ligne 1 → La Défense</text>
+          <circle cx="30" cy="35" r="9" fill="#fff" stroke="#1D3557" stroke-width="3"/>
+          <text x="30" y="60" text-anchor="middle" font-size="10.5" font-weight="bold">Bastille</text>
+          <circle cx="120" cy="35" r="9" fill="#fff" stroke="#1D3557" stroke-width="3"/>
+          <text x="120" y="60" text-anchor="middle" font-size="10.5" font-weight="bold">Saint-Paul</text>
+          <circle cx="220" cy="35" r="9" fill="#fff" stroke="#1D3557" stroke-width="3"/>
+          <text x="220" y="60" text-anchor="middle" font-size="10.5" font-weight="bold">Hôtel de Ville</text>
+          <circle cx="330" cy="35" r="12" fill="#fff" stroke="#C1121F" stroke-width="4"/>
+          <text x="330" y="60" text-anchor="middle" font-size="10.5" font-weight="bold" fill="#C1121F">Châtelet</text>
+
+          <line x1="330" y1="35" x2="330" y2="105" stroke="#C1121F" stroke-width="2" stroke-dasharray="4,3"/>
+
+          <line x1="330" y1="105" x2="470" y2="105" stroke="#BE418D" stroke-width="7" stroke-linecap="round"/>
+          <text x="335" y="130" font-size="11" fill="#7a2a5c" font-weight="bold">Ligne 4 → Porte de Clignancourt</text>
+          <circle cx="380" cy="105" r="9" fill="#fff" stroke="#1D3557" stroke-width="3"/>
+          <text x="380" y="145" text-anchor="middle" font-size="10.5" font-weight="bold">Les Halles</text>
+          <circle cx="470" cy="105" r="9" fill="#fff" stroke="#1D3557" stroke-width="3"/>
+          <text x="470" y="145" text-anchor="middle" font-size="9.5" font-weight="bold">Réaumur–Sébastopol</text>
+        </svg>
+      </div>
+      <button class="secondary" onclick="check3('leshalles')">Les Halles</button>
+      <button class="secondary" onclick="check3('reaumur')">Réaumur–Sébastopol</button>
+      <button class="secondary" onclick="check3('strasbourg')">Strasbourg–Saint-Denis</button>
+      <div class="feedback" id="fb-3"></div>
+      <div class="hint-box hidden" id="hint-3"><b>Hilfe (DE):</b> Nach dem Umstieg in Châtelet auf Linie 4 ist "Les Halles" die 1. Station, die 2. Station ist die gesuchte Antwort.</div>
+      <button class="secondary" onclick="toggleHint(3)">💡 Aide / Hilfe</button>
+      <button id="next-3" class="go hidden" onclick="goToPuzzle(4)">Énigme suivante ➜</button>
+    </div>
+
+    <!-- ---------- PUZZLE 4 : LA CRÊPERIE ---------- -->
+    <div class="screen card puzzle hidden" id="puzzle-4" style="--accent:#FF6F91">
+      <div class="chip">Énigme 4 / 9 · Crêperie</div>
+      <h2>🥞 Crêpe ou galette ?</h2>
+      <p><b>Question de culture :</b> en Bretagne, quelle est la différence entre une crêpe et une galette ?</p>
+      <select id="q4vocab">
+        <option value="">--</option>
+        <option value="a">La galette est salée (sarrasin), la crêpe est sucrée (froment)</option>
+        <option value="b">Il n'y a pas de différence</option>
+        <option value="c">La galette est sucrée, la crêpe est salée</option>
+      </select>
+      <h3>Maintenant, remettez les mots dans le bon ordre pour commander poliment :</h3>
+      <div class="builder" id="builder4"><i>(cliquez sur les mots ci-dessous)</i></div>
+      <div id="wordbank4"></div>
+      <button class="secondary" onclick="resetBuilder4()">↩️ Effacer</button>
+      <br>
+      <button onclick="check4()">Vérifier</button>
+      <div class="feedback" id="fb-4"></div>
+      <div class="hint-box hidden" id="hint-4"><b>Hilfe (DE):</b> Die Galette (aus Buchweizen) ist salzig, die Crêpe (aus Weizenmehl) ist süß. Der Zielsatz lautet: "Je voudrais une galette au fromage, s'il vous plaît."</div>
+      <button class="secondary" onclick="toggleHint(4)">💡 Aide / Hilfe</button>
+      <button id="next-4" class="go hidden" onclick="goToPuzzle(5)">Énigme suivante ➜</button>
+    </div>
+
+    <!-- ---------- PUZZLE 5 : FUTUR COMPOSÉ (négation / question) ---------- -->
+    <div class="screen card puzzle hidden" id="puzzle-5" style="--accent:#06D6A0">
+      <div class="chip">Énigme 5 / 9 · Grammaire +</div>
+      <h2>📝 Futur composé : forme négative et question</h2>
+      <div class="row">1. Mettez à la forme négative : « Nous allons visiter le Louvre. »
+        <select id="q5a"><option value="">--</option>
+        <option value="Nous n'allons pas visiter le Louvre.">Nous n'allons pas visiter le Louvre.</option>
+        <option value="Nous allons pas visiter le Louvre.">Nous allons pas visiter le Louvre.</option>
+        <option value="Nous ne allons visiter pas le Louvre.">Nous ne allons visiter pas le Louvre.</option>
+        </select>
+      </div>
+      <div class="row">2. Quelle est la bonne question ?
+        <select id="q5b"><option value="">--</option>
+        <option value="Est-ce que tu vas manger une crêpe ?">Est-ce que tu vas manger une crêpe ?</option>
+        <option value="Tu es-ce que vas manger une crêpe ?">Tu es-ce que vas manger une crêpe ?</option>
+        <option value="Vas-tu es-ce que manger une crêpe ?">Vas-tu es-ce que manger une crêpe ?</option>
+        </select>
+      </div>
+      <div class="row">3. Ce week-end, elles
+        <select id="q5c"><option value="">--</option><option value="vont faire">vont faire</option><option value="va faire">va faire</option><option value="allons faire">allons faire</option></select>
+        une promenade sur les Champs-Élysées. <i>(faire)</i>
+      </div>
+      <div class="row">4. Il
+        <select id="q5d"><option value="">--</option><option value="ne va pas prendre">ne va pas prendre</option><option value="va ne pas prendre">va ne pas prendre</option><option value="ne prend pas va">ne prend pas va</option></select>
+        le métro, il va marcher. <i>(ne pas prendre)</i>
+      </div>
+      <button onclick="check5()">Vérifier</button>
+      <div class="feedback" id="fb-5"></div>
+      <div class="hint-box hidden" id="hint-5"><b>Hilfe (DE):</b> Verneinung: ne + aller-Form + pas + Infinitiv ("ne va pas prendre"). Frage: "Est-ce que" steht am Satzanfang.</div>
+      <button class="secondary" onclick="toggleHint(5)">💡 Aide / Hilfe</button>
+      <button id="next-5" class="go hidden" onclick="goToPuzzle(6)">Énigme suivante ➜</button>
+    </div>
+
+    <!-- ---------- PUZZLE 6 : SPÉCIALITÉS RÉGIONALES ---------- -->
+    <div class="screen card puzzle hidden" id="puzzle-6" style="--accent:#9D6FE0">
+      <div class="chip">Énigme 6 / 9 · Régions de France</div>
+      <h2>🗺️ Spécialités et régions</h2>
+      <p>Associez chaque plat à sa région d'origine :</p>
+      <div class="row">🥞 Les crêpes / galettes viennent de
+        <select id="q6a"><option value="">--</option><option value="la Bretagne">la Bretagne</option><option value="l'Alsace">l'Alsace</option><option value="la Provence">la Provence</option></select>
+      </div>
+      <div class="row">🥧 La quiche lorraine vient de
+        <select id="q6b"><option value="">--</option><option value="la Lorraine">la Lorraine</option><option value="la Normandie">la Normandie</option><option value="la Corse">la Corse</option></select>
+      </div>
+      <div class="row">🐟 La bouillabaisse vient de
+        <select id="q6c"><option value="">--</option><option value="la Provence">la Provence</option><option value="la Bretagne">la Bretagne</option><option value="l'Alsace">l'Alsace</option></select>
+      </div>
+      <div class="row">🥬 La choucroute vient de
+        <select id="q6d"><option value="">--</option><option value="l'Alsace">l'Alsace</option><option value="la Lorraine">la Lorraine</option><option value="la Provence">la Provence</option></select>
+      </div>
+      <button onclick="check6()">Vérifier</button>
+      <div class="feedback" id="fb-6"></div>
+      <div class="hint-box hidden" id="hint-6"><b>Hilfe (DE):</b> Crêpes/Galettes = Bretagne, Quiche Lorraine = Lorraine (Name!), Bouillabaisse (Fischsuppe) = Provence, Choucroute (Sauerkraut) = Elsass.</div>
+      <button class="secondary" onclick="toggleHint(6)">💡 Aide / Hilfe</button>
+      <button id="next-6" class="go hidden" onclick="goToPuzzle(7)">Énigme suivante ➜</button>
+    </div>
+
+    <!-- ---------- PUZZLE 7 : DEMANDER SON CHEMIN ---------- -->
+    <div class="screen card puzzle hidden" id="puzzle-7" style="--accent:#FF8C42">
+      <div class="chip">Énigme 7 / 9 · Demander son chemin</div>
+      <h2>🧭 Pardon, madame...</h2>
+      <div class="row">Vous êtes perdus. Complétez la question polie :<br>
+        « Pardon, madame,
+        <select id="q7a"><option value="">--</option><option value="pour aller à">pour aller à</option><option value="pour aller au">pour aller au</option><option value="aller pour">aller pour</option></select>
+        la tour Eiffel, s'il vous plaît ? »
+      </div>
+      <div class="bubble">Réponse de la dame : <i>« Vous continuez tout droit, puis vous tournez à gauche après le pont. La tour Eiffel est en face. »</i></div>
+      <p>Où devez-vous tourner ?</p>
+      <div class="icon-grid">
+        <div class="icon-choice" onclick="check7(this,'gauche')">⬅️<br>À gauche, après le pont</div>
+        <div class="icon-choice" onclick="check7(this,'droite')">➡️<br>À droite, avant le pont</div>
+        <div class="icon-choice" onclick="check7(this,'droit')">⬆️<br>Tout droit, sans tourner</div>
+      </div>
+      <div class="feedback" id="fb-7"></div>
+      <div class="hint-box hidden" id="hint-7"><b>Hilfe (DE):</b> "pour aller à" + Ort ohne Artikel-Verschmelzung (la tour Eiffel); die Dame sagt "après le pont" = nach der Brücke.</div>
+      <button class="secondary" onclick="toggleHint(7)">💡 Aide / Hilfe</button>
+      <button id="next-7" class="go hidden" onclick="goToPuzzle(8)">Énigme suivante ➜</button>
+    </div>
+
+    <!-- ---------- PUZZLE 8 : MONUMENTS & HISTOIRE ---------- -->
+    <div class="screen card puzzle hidden" id="puzzle-8" style="--accent:#5B8BE2">
+      <div class="chip">Énigme 8 / 9 · Monuments & histoire</div>
+      <h2>🏛️ Un peu d'histoire</h2>
+      <div class="row">1. Quel événement s'est passé à Notre-Dame de Paris en 2019 ?
+        <select id="q8a"><option value="">--</option><option value="un incendie">un incendie</option><option value="une inondation">une inondation</option><option value="une tempête">une tempête</option></select>
+      </div>
+      <div class="row">2. Qui a conçu la pyramide de verre du Louvre ?
+        <select id="q8b"><option value="">--</option><option value="I. M. Pei">I. M. Pei</option><option value="Gustave Eiffel">Gustave Eiffel</option><option value="Le Corbusier">Le Corbusier</option></select>
+      </div>
+      <div class="row">3. Quel empereur a fait construire l'Arc de Triomphe ?
+        <select id="q8c"><option value="">--</option><option value="Napoléon Bonaparte">Napoléon Bonaparte</option><option value="Louis XIV">Louis XIV</option><option value="Charlemagne">Charlemagne</option></select>
+      </div>
+      <button onclick="check8()">Vérifier</button>
+      <div class="feedback" id="fb-8"></div>
+      <div class="hint-box hidden" id="hint-8"><b>Hilfe (DE):</b> 2019 brannte Notre-Dame. Die Glaspyramide im Louvre stammt vom Architekten I. M. Pei. Napoleon ließ den Arc de Triomphe bauen.</div>
+      <button class="secondary" onclick="toggleHint(8)">💡 Aide / Hilfe</button>
+      <button id="next-8" class="go hidden" onclick="goToPuzzle(9)">Énigme suivante ➜</button>
+    </div>
+
+    <!-- ---------- PUZZLE 9 : L'HEURE ET LES HORAIRES ---------- -->
+    <div class="screen card puzzle hidden" id="puzzle-9" style="--accent:#E63946">
+      <div class="chip">Énigme 9 / 9 · L'heure</div>
+      <h2>🕐 Il ne faut pas être en retard !</h2>
+      <div class="row">1. Comment écrit-on « dix-sept heures quinze » en chiffres ?
+        <select id="q9a"><option value="">--</option><option value="17h15">17h15</option><option value="15h17">15h17</option><option value="07h15">07h15</option></select>
+      </div>
+      <p>2. Le musée du Louvre ferme à <b>18h00</b>. Il est actuellement <b>17h15</b>. Combien de minutes reste-t-il avant la fermeture ?</p>
+      <input type="text" id="q9b" placeholder="… minutes">
+      <button onclick="check9()">Vérifier</button>
+      <div class="feedback" id="fb-9"></div>
+      <div class="hint-box hidden" id="hint-9"><b>Hilfe (DE):</b> 18h00 − 17h15 = 45 Minuten.</div>
+      <button class="secondary" onclick="toggleHint(9)">💡 Aide / Hilfe</button>
+      <button id="next-9" class="go hidden" onclick="goToPuzzle(10)">Dernière étape ➜</button>
+    </div>
+
+    <!-- ---------- PUZZLE 10 : LE MOT FINAL ---------- -->
+    <div class="screen card puzzle hidden" id="puzzle-10" style="--accent:#C1121F">
+      <div class="chip">Le mot final</div>
+      <h2>🗼 Rendez-vous à la Tour Eiffel</h2>
+      <p>Regardez le collier de macarons en haut de la page : mettez les 9 lettres dans l'ordre pour former un mot délicieux, et rejoignez toute la classe à l'heure !</p>
+      <input type="text" id="q10" placeholder="MOT SECRET (9 lettres)" style="text-transform:uppercase;">
+      <button class="final" onclick="checkFinal()">🗼 Rejoindre la classe</button>
+      <div class="feedback" id="fb-10"></div>
+      <div class="hint-box hidden" id="hint-10"><b>Hilfe (DE):</b> Lies die 9 Buchstaben im Collier oben von links nach rechts — sie ergeben den Namen einer sehr bekannten französischen Viennoiserie.</div>
+      <button class="secondary" onclick="toggleHint(10)">💡 Aide / Hilfe</button>
+    </div>
+
+    <!-- ---------- ENDING ---------- -->
+    <div class="screen card hidden" id="screen-end" style="--accent:#C1121F">
+      <div class="chip">Bravo !</div>
+      <h2>🎉 Toute la classe est réunie !</h2>
+      <div class="bubble">Vous arrivez à <b>17h00 pile</b> devant la Tour Eiffel. Toute la classe est là ! Le professeur sourit : <i>« Parfait, vous trois êtes à l'heure ! Et en récompense... un dernier croissant pour la route ! »</i> 🥐</div>
+      <p>Bravo ! Vous avez pratiqué le futur composé (affirmatif, négatif, question), le vocabulaire de la boulangerie et de la crêperie, le métro parisien, les régions de France et un peu d'histoire. Bon voyage à Paris ! 🗼</p>
+      <div class="cert" id="cert-area">
+        <div class="chip">Diplôme</div>
+        <h3>Diplôme de jeune Parisien(ne)</h3>
+        <p>Nom : <input type="text" id="certName" placeholder="Votre nom"></p>
+        <p><b>a rejoint la classe à l'heure devant la Tour Eiffel 🗼</b></p>
+      </div>
+      <button onclick="window.print()">🖨️ Imprimer le diplôme</button>
+      <button class="secondary" onclick="location.reload()">🔁 Recommencer</button>
+    </div>
+
+  </div>
+
+  <footer class="note">Jeu créé pour préparer une sortie scolaire à Paris — niveau A1, 2e année.</footer>
+</div>
+
+<script>
+function goTo(id){
+  document.getElementById('screen-intro').classList.add('hidden');
+  document.getElementById(id).classList.remove('hidden');
+}
+function goToPuzzle(n){
+  for(let i=1;i<=10;i++){document.getElementById('puzzle-'+i).classList.add('hidden');}
+  if(n>0) document.getElementById('puzzle-'+n).classList.remove('hidden');
+}
+function toggleHint(n){ document.getElementById('hint-'+n).classList.toggle('hidden'); }
+function solveGem(i){ document.getElementById('gem-'+i).classList.add('solved'); }
+function norm(s){ return s.trim().toLowerCase().replace(/,/g,'.').normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
+
+// ---- Puzzle 1 ----
+function check1(){
+  const correct = {q1a:'je voudrais', q1b:'Voici', q1c:'Merci, au revoir !'};
+  let allOk = Object.keys(correct).every(id=>document.getElementById(id).value===correct[id]);
+  const val = norm(document.getElementById('q1d').value).replace(/[^0-9.]/g,'');
+  const num = parseFloat(val);
+  const priceOk = Math.abs(num-1.3) < 0.01;
+  const fb=document.getElementById('fb-1');
+  if(allOk && priceOk){
+    fb.textContent="✅ Parfait ! Dialogue correct et un croissant coûte 1,30 €.";
+    fb.className="feedback ok"; solveGem(0);
+    document.getElementById('next-1').classList.remove('hidden');
+  } else {
+    fb.textContent="❌ Vérifiez les formules de politesse ET le calcul du prix.";
+    fb.className="feedback no";
+  }
+}
+
+// ---- Puzzle 2 ----
+function check2(){
+  const correct = {q2a:'la Seine', q2b:'20', q2c:"le palais de l'Élysée", q2d:'1889'};
+  let allOk = Object.keys(correct).every(id=>document.getElementById(id).value===correct[id]);
+  const fb=document.getElementById('fb-2');
+  if(allOk){ fb.textContent="✅ Bravo, vous connaissez bien Paris !"; fb.className="feedback ok"; solveGem(1); document.getElementById('next-2').classList.remove('hidden'); }
+  else { fb.textContent="❌ Au moins une réponse est fausse. Réessayez !"; fb.className="feedback no"; }
+}
+
+// ---- Puzzle 3 ----
+function check3(ans){
+  const fb=document.getElementById('fb-3');
+  if(ans==='reaumur'){
+    fb.textContent="✅ Exact ! Châtelet → Les Halles → Réaumur–Sébastopol.";
+    fb.className="feedback ok"; solveGem(2);
+    document.getElementById('next-3').classList.remove('hidden');
+  } else {
+    fb.textContent="❌ Recomptez à partir de Châtelet sur la ligne 4.";
+    fb.className="feedback no";
+  }
+}
+
+// ---- Puzzle 4 ----
+const targetSentence = ["Je","voudrais","une","galette","au","fromage,","s'il","vous","plaît."];
+let shuffledWords = ["fromage,","Je","plaît.","une","voudrais","s'il","au","vous","galette"];
+let builder4 = [];
+function renderWordbank(){
+  const bank = document.getElementById('wordbank4');
+  bank.innerHTML = '';
+  shuffledWords.forEach((w,idx)=>{
+    const b = document.createElement('button');
+    b.className = 'word';
+    b.textContent = w;
+    b.id = 'wb4-'+idx;
+    b.onclick = function(){ pickWord(w, idx); };
+    bank.appendChild(b);
+  });
+}
+function pickWord(w, idx){
+  builder4.push(w);
+  document.getElementById('wb4-'+idx).disabled = true;
+  document.getElementById('builder4').textContent = builder4.join(' ');
+}
+function resetBuilder4(){
+  builder4 = [];
+  document.getElementById('builder4').innerHTML = '<i>(cliquez sur les mots ci-dessous)</i>';
+  document.querySelectorAll('#wordbank4 .word').forEach(b=>b.disabled=false);
+}
+renderWordbank();
+function check4(){
+  const fb=document.getElementById('fb-4');
+  const vocabOk = document.getElementById('q4vocab').value === 'a';
+  const sentenceOk = builder4.join(' ') === targetSentence.join(' ');
+  if(vocabOk && sentenceOk){
+    fb.textContent="✅ Parfait ! Phrase bien construite et différence bien comprise.";
+    fb.className="feedback ok"; solveGem(3);
+    document.getElementById('next-4').classList.remove('hidden');
+  } else {
+    fb.textContent="❌ Vérifiez la question de culture ET l'ordre des mots (cliquez 'Effacer' pour recommencer).";
+    fb.className="feedback no";
+  }
+}
+
+// ---- Puzzle 5 ----
+function check5(){
+  const correct = {
+    q5a:"Nous n'allons pas visiter le Louvre.",
+    q5b:"Est-ce que tu vas manger une crêpe ?",
+    q5c:"vont faire",
+    q5d:"ne va pas prendre"
+  };
+  let allOk = Object.keys(correct).every(id=>document.getElementById(id).value===correct[id]);
+  const fb=document.getElementById('fb-5');
+  if(allOk){ fb.textContent="✅ Excellent, la négation et la question sont maîtrisées !"; fb.className="feedback ok"; solveGem(4); document.getElementById('next-5').classList.remove('hidden'); }
+  else { fb.textContent="❌ Au moins une réponse est fausse. Revoyez la négation (ne...pas) et la question (Est-ce que)."; fb.className="feedback no"; }
+}
+
+// ---- Puzzle 6 ----
+function check6(){
+  const correct = {q6a:'la Bretagne', q6b:'la Lorraine', q6c:'la Provence', q6d:"l'Alsace"};
+  let allOk = Object.keys(correct).every(id=>document.getElementById(id).value===correct[id]);
+  const fb=document.getElementById('fb-6');
+  if(allOk){ fb.textContent="✅ Bravo, vous connaissez la carte gourmande de la France !"; fb.className="feedback ok"; solveGem(5); document.getElementById('next-6').classList.remove('hidden'); }
+  else { fb.textContent="❌ Au moins une association est fausse."; fb.className="feedback no"; }
+}
+
+// ---- Puzzle 7 ----
+function check7(el, ans){
+  document.querySelectorAll('#puzzle-7 .icon-choice').forEach(c=>c.classList.remove('correct','wrong'));
+  const fb=document.getElementById('fb-7');
+  const dirOk = document.getElementById('q7a').value === 'pour aller à';
+  if(ans==='gauche' && dirOk){
+    el.classList.add('correct');
+    fb.textContent="✅ Exact ! Et la formule de politesse est correcte.";
+    fb.className="feedback ok"; solveGem(6);
+    document.getElementById('next-7').classList.remove('hidden');
+  } else {
+    el.classList.add('wrong');
+    fb.textContent="❌ Vérifiez la formule ET la direction (relisez la réponse de la dame).";
+    fb.className="feedback no";
+  }
+}
+
+// ---- Puzzle 8 ----
+function check8(){
+  const correct = {q8a:'un incendie', q8b:'I. M. Pei', q8c:'Napoléon Bonaparte'};
+  let allOk = Object.keys(correct).every(id=>document.getElementById(id).value===correct[id]);
+  const fb=document.getElementById('fb-8');
+  if(allOk){ fb.textContent="✅ Bravo, petit(e) historien(ne) !"; fb.className="feedback ok"; solveGem(7); document.getElementById('next-8').classList.remove('hidden'); }
+  else { fb.textContent="❌ Au moins une réponse est fausse."; fb.className="feedback no"; }
+}
+
+// ---- Puzzle 9 ----
+function check9(){
+  const timeOk = document.getElementById('q9a').value === '17h15';
+  const val = norm(document.getElementById('q9b').value).replace(/[^0-9]/g,'');
+  const minOk = parseInt(val) === 45;
+  const fb=document.getElementById('fb-9');
+  if(timeOk && minOk){ fb.textContent="✅ Parfait ! Il reste 45 minutes."; fb.className="feedback ok"; solveGem(8); document.getElementById('next-9').classList.remove('hidden'); }
+  else { fb.textContent="❌ Vérifiez l'heure ET le calcul (18h00 − 17h15)."; fb.className="feedback no"; }
+}
+
+// ---- Puzzle 10 (final) ----
+function checkFinal(){
+  const val = norm(document.getElementById('q10').value).toUpperCase().replace(/\s/g,'');
+  const fb=document.getElementById('fb-10');
+  if(val === 'CROISSANT'){
+    fb.textContent="🎉 Bravo ! Direction la Tour Eiffel...";
+    fb.className="feedback ok";
+    setTimeout(()=>{ goToPuzzle(0); document.getElementById('screen-end').classList.remove('hidden'); }, 900);
+  } else {
+    fb.textContent="❌ Ce n'est pas le bon mot. Regardez bien les 9 lettres du collier, dans l'ordre.";
+    fb.className="feedback no";
+  }
+}
+</script>
+</body>
+</html>
