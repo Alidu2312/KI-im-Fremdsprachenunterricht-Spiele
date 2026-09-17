@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>La chambre de Lili-Rose</title>
+<style>
+:root{
+  --turquoise:#2EC4C6;
+  --turquoise-d:#1FA3A5;
+  --bleu:#8FE0F0;
+  --bleu-d:#5FC3D8;
+  --rose:#FF8FB1;
+  --rose-d:#F16A93;
+  --jaune:#FFD966;
+  --jaune-d:#F0C438;
+  --blanc:#FFFFFF;
+  --ink:#2B2440;
+  --floor:#E8C79B;
+  --floor-d:#D8AE79;
+  --wall:#CDEEF2;
+  --green:#4CAF6D;
+  --red:#E85D5D;
+  --radius:18px;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;height:100%;overflow-x:hidden;}
+body{
+  font-family: Verdana, "Trebuchet MS", system-ui, sans-serif;
+  background: linear-gradient(180deg, var(--bleu) 0%, #EAF9FA 40%);
+  color: var(--ink);
+  min-height:100%;
+  display:flex;
+  flex-direction:column;
+}
+#app{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  max-width:760px;
+  margin:0 auto;
+  width:100%;
+  min-height:100vh;
+  position:relative;
+}
+.screen{display:none; flex-direction:column; flex:1; padding:14px; padding-bottom:26px;}
+.screen.active{display:flex;}
+
+/* ---------- generic buttons ---------- */
+button{font-family:inherit; border:none; cursor:pointer;}
+.btn{
+  background: var(--turquoise);
+  color:white;
+  font-weight:bold;
+  font-size:1.1rem;
+  padding:14px 28px;
+  border-radius:999px;
+  box-shadow:0 4px 0 var(--turquoise-d);
+  transition:transform .08s ease;
+}
+.btn:active{transform:translateY(3px); box-shadow:0 1px 0 var(--turquoise-d);}
+.btn.rose{background:var(--rose); box-shadow:0 4px 0 var(--rose-d);}
+.btn.jaune{background:var(--jaune); color:var(--ink); box-shadow:0 4px 0 var(--jaune-d);}
+.btn.big{font-size:1.4rem; padding:18px 36px;}
+.btn-row{display:flex; justify-content:center; gap:12px; flex-wrap:wrap;}
+
+/* ---------- speech bubble ---------- */
+.bubble{
+  background:white;
+  border-radius:22px;
+  padding:16px 20px;
+  position:relative;
+  box-shadow:0 4px 10px rgba(0,0,0,.12);
+  font-size:1.15rem;
+  line-height:1.45;
+  max-width:520px;
+  margin:0 auto 18px auto;
+}
+.bubble:after{
+  content:"";
+  position:absolute;
+  bottom:-14px; left:38px;
+  border-width:14px 14px 0 0;
+  border-style:solid;
+  border-color:white transparent transparent transparent;
+}
+.bubble b{color:var(--rose-d);}
+
+/* ---------- intro screen ---------- */
+#screen-intro{align-items:center; justify-content:center; text-align:center; gap:8px;}
+.intro-avatar{line-height:1;}
+.intro-avatar svg{width:120px; height:144px;}
+.overlay-card .big-emoji svg{width:66px; height:80px;}
+.intro-title{font-size:1.7rem; font-weight:bold; margin:6px 0 2px 0;}
+.intro-sub{font-size:1.05rem; color:#645d78; margin-bottom:6px;}
+.big-question{
+  font-size:1.6rem; font-weight:bold; color:var(--rose-d);
+  margin:14px 0 20px 0;
+}
+
+/* ---------- top bar ---------- */
+.topbar{
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:8px;
+}
+.mission-label{
+  font-weight:bold; font-size:1.05rem;
+  background:white; padding:6px 14px; border-radius:999px;
+  box-shadow:0 2px 6px rgba(0,0,0,.08);
+}
+.progress-dots{display:flex; gap:6px;}
+.dot{width:12px; height:12px; border-radius:50%; background:#D9D3E8;}
+.dot.done{background:var(--green);}
+.dot.current{background:var(--jaune-d);}
+
+/* ---------- role banner (partner mode) ---------- */
+.role-banner{
+  display:flex; justify-content:center; gap:10px; margin-bottom:8px; flex-wrap:wrap;
+}
+.role-pill{
+  background:white; border-radius:999px; padding:6px 12px;
+  font-size:.85rem; font-weight:bold; box-shadow:0 2px 5px rgba(0,0,0,.08);
+  display:flex; align-items:center; gap:6px;
+}
+.role-pill.active{background:var(--jaune);}
+
+/* ---------- room ---------- */
+#room-wrap{position:relative; width:100%; margin-bottom:10px;}
+#room{
+  position:relative;
+  width:100%;
+  aspect-ratio: 4 / 3.1;
+  border-radius:var(--radius);
+  overflow:hidden;
+  background:
+    repeating-linear-gradient(90deg, rgba(255,255,255,.16) 0 2px, transparent 2px 8.3%),
+    linear-gradient(180deg, var(--wall) 0%, var(--wall) 15%, var(--floor) 15%, var(--floor-d) 100%);
+  box-shadow: inset 0 0 0 4px white, 0 6px 14px rgba(0,0,0,.15);
+  touch-action:none;
+}
+.rug{
+  position:absolute; left:22%; top:69%; width:26%; height:25%;
+  border-radius:50%;
+  background: repeating-radial-gradient(circle at center, var(--rose) 0 6%, var(--jaune) 6% 12%, var(--turquoise) 12% 18%, var(--rose) 18% 24%);
+  opacity:.5; z-index:1; box-shadow:0 3px 6px rgba(0,0,0,.12);
+}
+.furn{
+  position:absolute;
+  border-radius:10px;
+  display:flex; align-items:flex-start; justify-content:center;
+  font-size:.62rem; font-weight:bold; color:white;
+  padding-top:3px;
+  text-shadow:0 1px 2px rgba(0,0,0,.25);
+  box-shadow:0 3px 6px rgba(0,0,0,.15);
+}
+.furn.armoire{left:2%; top:9%; width:20%; height:58%; background:linear-gradient(180deg,var(--turquoise),var(--turquoise-d));}
+.furn.armoire:before, .furn.armoire:after{
+  content:""; position:absolute; top:8%; bottom:8%; width:1px; background:rgba(255,255,255,.5);
+}
+.furn.armoire:before{left:50%;}
+.furn.bureau{left:3%; top:71%; width:21%; height:21%; background:linear-gradient(180deg,var(--rose),var(--rose-d)); align-items:flex-end; padding-bottom:3px; padding-top:0;}
+.furn.etagere{left:25%; top:1%; width:48%; height:7.5%; background:linear-gradient(180deg,var(--jaune),var(--jaune-d)); color:var(--ink); text-shadow:none;}
+.furn.lit{left:46%; top:15%; width:51%; height:72%;
+  background:
+    radial-gradient(circle at 22% 28%, rgba(255,255,255,.55) 0 4%, transparent 4%),
+    radial-gradient(circle at 55% 62%, rgba(255,255,255,.55) 0 3.4%, transparent 3.4%),
+    radial-gradient(circle at 78% 22%, rgba(255,255,255,.5) 0 3%, transparent 3%),
+    radial-gradient(circle at 35% 80%, rgba(255,255,255,.45) 0 3%, transparent 3%),
+    radial-gradient(circle at 85% 70%, rgba(255,255,255,.5) 0 3.6%, transparent 3.6%),
+    linear-gradient(180deg,var(--bleu),var(--bleu-d));
+  align-items:flex-end; padding-bottom:4px; padding-top:0;}
+.lit-pillow{position:absolute; left:6%; top:6%; width:38%; height:22%; background:white; border-radius:12px; box-shadow:inset 0 0 0 2px #eee;}
+.lit-blanket{position:absolute; left:4%; bottom:6%; width:92%; height:34%; background:repeating-linear-gradient(45deg, rgba(255,255,255,.35) 0 10px, rgba(255,255,255,0) 10px 20px); border-radius:10px;}
+.deco{position:absolute; font-size:clamp(18px,4.2vw,30px); filter:drop-shadow(0 2px 2px rgba(0,0,0,.2));}
+.deco.plante{left:83%; top:80%;}
+.deco.photo{left:87%; top:3%; width:10%; aspect-ratio:1; background:white; border:3px solid var(--ink); border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:clamp(14px,3vw,20px);}
+.deco.teddy{left:5%; top:1.5%; font-size:clamp(16px,4.5vw,28px); z-index:3;}
+.deco.headphones{left:64%; top:1%; font-size:clamp(14px,3.6vw,24px); transform:rotate(-12deg); z-index:6;}
+.zone-hint{
+  position:absolute;
+  width:15%; aspect-ratio:1;
+  border:3px dashed var(--rose-d);
+  border-radius:50%;
+  transform:translate(-50%,-50%);
+  opacity:0; pointer-events:none;
+  transition:opacity .2s ease;
+}
+.zone-hint.show{opacity:.9; animation:pulse 1s infinite;}
+@keyframes pulse{0%,100%{transform:translate(-50%,-50%) scale(1);} 50%{transform:translate(-50%,-50%) scale(1.08);}}
+
+.obj{
+  position:absolute;
+  font-size:clamp(30px,8.5vw,50px);
+  transform:translate(-50%,-50%);
+  touch-action:none;
+  cursor:grab;
+  filter:drop-shadow(0 3px 4px rgba(0,0,0,.3));
+  transition:left .35s cubic-bezier(.34,1.56,.64,1), top .35s cubic-bezier(.34,1.56,.64,1);
+  user-select:none;
+  z-index:5;
+}
+.obj.dragging{transition:none; cursor:grabbing; z-index:50; filter:drop-shadow(0 8px 10px rgba(0,0,0,.35)); transform:translate(-50%,-50%) scale(1.12);}
+.obj.selected{outline:4px solid var(--jaune-d); outline-offset:4px; border-radius:50%; animation:pulse 1s infinite;}
+.obj.locked{opacity:.35; pointer-events:none; filter:none;}
+.obj.done{cursor:default;}
+.obj.wrong-shake{animation:shake .4s;}
+@keyframes shake{0%,100%{transform:translate(-50%,-50%);}25%{transform:translate(calc(-50% - 8px),-50%);}75%{transform:translate(calc(-50% + 8px),-50%);}}
+
+.gift{
+  position:absolute;
+  font-size:clamp(30px,8vw,46px);
+  transform:translate(-50%,-50%) scale(.2);
+  opacity:0;
+  z-index:4;
+  transition:opacity .5s ease, transform .5s cubic-bezier(.34,1.56,.64,1);
+  filter:drop-shadow(0 3px 4px rgba(0,0,0,.3));
+}
+.gift.revealed{opacity:1; transform:translate(-50%,-50%) scale(1);}
+.spark{position:absolute; font-size:1.1rem; opacity:0; transform:translate(-50%,-50%) scale(.4);}
+.spark.show{animation:spark .9s ease forwards;}
+@keyframes spark{
+  0%{opacity:0; transform:translate(-50%,-50%) scale(.3);}
+  40%{opacity:1;}
+  100%{opacity:0; transform:translate(-50%,-50%) translateY(-30px) scale(1);}
+}
+
+/* ---------- task / quiz panel ---------- */
+#panel{
+  background:white; border-radius:var(--radius);
+  padding:16px; box-shadow:0 4px 10px rgba(0,0,0,.1);
+  text-align:center;
+}
+.panel-question{font-size:1.25rem; font-weight:bold; margin-bottom:12px;}
+.panel-instr{font-size:1.2rem; font-weight:bold; margin-bottom:4px;}
+.pict{font-size:2rem; margin-bottom:4px;}
+.options{display:flex; flex-direction:column; gap:10px; margin-top:8px;}
+.opt-card{
+  background:var(--bleu); border-radius:14px; padding:13px; font-size:1.05rem; font-weight:bold;
+  box-shadow:0 3px 0 var(--bleu-d); transition:transform .08s;
+}
+.opt-card:active{transform:translateY(2px);}
+.opt-card.correct{background:var(--green); color:white; box-shadow:0 3px 0 #398a53;}
+.opt-card.wrong{background:var(--red); color:white; box-shadow:0 3px 0 #b93f3f;}
+.feedback{min-height:1.6em; font-weight:bold; font-size:1.05rem; margin-top:8px;}
+.feedback.ok{color:var(--green);}
+.feedback.no{color:var(--red);}
+.hint-mode{font-size:.85rem; color:#7a7391; margin-top:6px;}
+
+.overlay-msg{
+  position:fixed; inset:0; background:rgba(43,36,64,.55);
+  display:flex; align-items:center; justify-content:center; z-index:200;
+  padding:20px;
+}
+.overlay-card{
+  background:white; border-radius:22px; padding:28px 24px; text-align:center; max-width:420px;
+  box-shadow:0 10px 30px rgba(0,0,0,.3);
+  animation:pop .3s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes pop{from{transform:scale(.7); opacity:0;} to{transform:scale(1); opacity:1;}}
+.overlay-card .big-emoji{font-size:3rem; margin-bottom:8px;}
+.overlay-card h2{margin:6px 0 10px 0; font-size:1.5rem;}
+.overlay-card p{font-size:1.1rem; margin:6px 0 16px 0; line-height:1.4;}
+
+/* ---------- avant / apres ---------- */
+.mini-rooms{display:flex; gap:10px; margin-bottom:12px;}
+.mini-room-box{flex:1; text-align:center;}
+.mini-room-label{font-weight:bold; font-size:.95rem; margin-bottom:4px;}
+.mini-room{
+  position:relative; width:100%; aspect-ratio:4/3.1; border-radius:12px; overflow:hidden;
+  background:
+    repeating-linear-gradient(90deg, rgba(255,255,255,.16) 0 1px, transparent 1px 8.3%),
+    linear-gradient(180deg, var(--wall) 0%, var(--wall) 15%, var(--floor) 15%, var(--floor-d) 100%);
+  box-shadow: inset 0 0 0 3px white, 0 3px 8px rgba(0,0,0,.15);
+}
+.mini-room .furn{font-size:0;}
+.mini-room .deco{font-size:10px !important; transform:none;}
+.mini-room .deco.photo{width:8%;}
+.mini-room .rug{opacity:.4;}
+.mini-room .obj-static{position:absolute; font-size:clamp(14px,4vw,20px); transform:translate(-50%,-50%);}
+
+.blank-sentence{font-size:1.15rem; font-weight:bold; margin-bottom:10px; line-height:1.5;}
+.blank{
+  display:inline-block; min-width:70px; border-bottom:3px solid var(--rose-d);
+  padding:0 4px; color:var(--rose-d);
+}
+
+/* ---------- confetti ---------- */
+.confetti{position:fixed; top:-10px; font-size:1.4rem; z-index:250; animation:fall linear forwards;}
+@keyframes fall{to{transform:translateY(110vh) rotate(360deg); opacity:.9;}}
+
+.sr-only{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0);}
+
+@media (max-width:380px){
+  .bubble{font-size:1rem;}
+  .big-question{font-size:1.3rem;}
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ============ INTRO ============ -->
+  <section id="screen-intro" class="screen active">
+    <div class="intro-avatar" id="intro-avatar"></div>
+    <div class="bubble">
+      « J'ai un cadeau 🎁 pour <b>Idriss</b>, mais il est où, le cadeau ?<br>
+      Ma chambre, c'est le bazar ! »
+    </div>
+    <div class="big-question">🎁 Où est le cadeau d'Idriss ?</div>
+    <button class="btn big" id="btn-start">▶ COMMENCER</button>
+  </section>
+
+  <!-- ============ GAME (Mission 1 & 2 & 3) ============ -->
+  <section id="screen-game" class="screen">
+    <div class="topbar">
+      <div class="mission-label" id="mission-label">🔎 MISSION 1</div>
+      <div class="progress-dots" id="progress-dots"></div>
+    </div>
+    <div class="role-banner" id="role-banner" style="display:none;">
+      <div class="role-pill" id="role-a">🗣️ ÉLÈVE A — Lis la phrase.</div>
+      <div class="role-pill" id="role-b">👆 ÉLÈVE B — Déplace l'objet.</div>
+    </div>
+    <div id="room-wrap">
+      <div id="room"></div>
+    </div>
+    <div id="panel"></div>
+  </section>
+
+  <!-- ============ AVANT / APRES ============ -->
+  <section id="screen-avant" class="screen">
+    <div class="topbar">
+      <div class="mission-label">📝 AVANT / APRÈS</div>
+      <div class="progress-dots" id="progress-dots-2"></div>
+    </div>
+    <div class="mini-rooms">
+      <div class="mini-room-box">
+        <div class="mini-room-label">😱 AVANT</div>
+        <div class="mini-room" id="mini-avant"></div>
+      </div>
+      <div class="mini-room-box">
+        <div class="mini-room-label">😍 APRÈS</div>
+        <div class="mini-room" id="mini-apres"></div>
+      </div>
+    </div>
+    <div id="panel-avant"></div>
+  </section>
+
+  <!-- ============ FINAL ============ -->
+  <section id="screen-final" class="screen" style="align-items:center; justify-content:center; text-align:center;">
+    <div style="font-size:3rem;">⭐ MISSION ACCOMPLIE ! ⭐</div>
+    <div class="bubble" style="margin-top:16px;">
+      🎁 « Voilà le cadeau d'Idriss ! »<br>
+      🧹 « La chambre est rangée ! »
+    </div>
+    <button class="btn jaune big" id="btn-replay" style="margin-top:18px;">🔄 REJOUER</button>
+  </section>
+
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ================= AVATAR ================= */
+
+const AVATAR_SVG = `<svg viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
+  <path d="M18 96 Q50 78 82 96 L88 120 L12 120 Z" fill="#E85D5D"/>
+  <rect x="41" y="68" width="18" height="20" rx="7" fill="#B5723A"/>
+  <circle cx="22" cy="40" r="13" fill="#241B14"/>
+  <circle cx="33" cy="24" r="14" fill="#241B14"/>
+  <circle cx="50" cy="17" r="15" fill="#241B14"/>
+  <circle cx="67" cy="24" r="14" fill="#241B14"/>
+  <circle cx="78" cy="40" r="13" fill="#241B14"/>
+  <circle cx="18" cy="54" r="10" fill="#241B14"/>
+  <circle cx="82" cy="54" r="10" fill="#241B14"/>
+  <circle cx="50" cy="56" r="27" fill="#C7854A"/>
+  <circle cx="38" cy="55" r="10" fill="none" stroke="#2B2440" stroke-width="3.4"/>
+  <circle cx="62" cy="55" r="10" fill="none" stroke="#2B2440" stroke-width="3.4"/>
+  <line x1="48" y1="55" x2="52" y2="55" stroke="#2B2440" stroke-width="3.4"/>
+  <circle cx="38" cy="55" r="2.6" fill="#2B2440"/>
+  <circle cx="62" cy="55" r="2.6" fill="#2B2440"/>
+  <path d="M40 67 Q50 75 60 67" stroke="#7A4A25" stroke-width="3" fill="none" stroke-linecap="round"/>
+</svg>`;
+
+document.getElementById("intro-avatar").innerHTML = AVATAR_SVG;
+
+/* ================= DATA ================= */
+
+const ZONES = {
+  surBureau:     {x:15, y:75, label:"sur le bureau"},
+  sousBureau:    {x:15, y:91, label:"sous le bureau"},
+  sousLitA:      {x:56, y:76, label:"sous le lit"},
+  sousLitB:      {x:70, y:88, label:"sous le lit"},
+  devantLit:     {x:42, y:91, label:"devant le lit"},
+  devantArmoire: {x:14, y:71, label:"devant l'armoire"},
+  coteArmoire:   {x:27, y:38, label:"à côté de l'armoire"},
+  surEtagere:    {x:49, y:7,  label:"sur l'étagère"},
+  dansArmoire:   {x:12, y:34, label:"dans l'armoire"},
+  surLitA:       {x:62, y:38, label:"sur le lit"},
+  surLitB:       {x:78, y:46, label:"sur le lit"}
+};
+
+const OBJECTS = {
+  cles:        {emoji:"🔑", label:"les clés",        start:"sousLitA",  target:"surBureau"},
+  sac:         {emoji:"🎒", label:"le sac",           start:"devantArmoire", target:"coteArmoire"},
+  chaussures:  {emoji:"👟", label:"les chaussures",   start:"devantLit", target:"sousLitB"},
+  ballon:      {emoji:"🏀", label:"le ballon",        start:"sousBureau", target:"devantArmoire"},
+  livres:      {emoji:"📚", label:"les livres",       start:"surLitA",   target:"surEtagere"},
+  vetements:   {emoji:"👕", label:"les vêtements",    start:"surLitB",   target:"dansArmoire"}
+};
+
+const GIFT_ZONE = ZONES.devantArmoire; // hidden behind/under the sac
+
+const MISSION1_QUESTIONS = [
+  {objectId:"cles",       prompt:"🔑 Où sont les clés ?",
+    options:["sous le lit","sur le bureau","devant l'armoire"], correct:"sous le lit"},
+  {objectId:"sac",        prompt:"🎒 Où est le sac ?",
+    options:["sur le lit","devant l'armoire","sous le lit"], correct:"devant l'armoire"},
+  {objectId:"chaussures", prompt:"👟 Où sont les chaussures ?",
+    options:["devant le lit","dans l'armoire","sur le bureau"], correct:"devant le lit"},
+  {objectId:"ballon",     prompt:"🏀 Où est le ballon ?",
+    options:["sur l'étagère","sous le bureau","à côté du lit"], correct:"sous le bureau"}
+];
+
+// order of mission 2 tasks — "sac" is deliberately last
+const MISSION2_ORDER = ["livres","chaussures","vetements","cles","ballon","sac"];
+
+const AVANT_APRES = [
+  {label:"🎒 LE SAC",
+    avantText:"Le sac est ____ l'armoire.", avantAnswer:"devant",
+    apresText:"Le sac est ____ l'armoire.", apresAnswer:"à côté de",
+    options:["devant","à côté de","sous"]},
+  {label:"🔑 LES CLÉS",
+    avantText:"Les clés sont ____ le lit.", avantAnswer:"sous",
+    apresText:"Les clés sont ____ le bureau.", apresAnswer:"sur",
+    options:["sous","sur","dans"]},
+  {label:"👟 LES CHAUSSURES",
+    avantText:"Les chaussures sont ____ le lit.", avantAnswer:"devant",
+    apresText:"Les chaussures sont ____ le lit.", apresAnswer:"sous",
+    options:["devant","sous","dans"]}
+];
+
+/* ================= STATE ================= */
+
+let state = {
+  m1Index: 0,
+  m2Index: 0,
+  m2CompletedCount: 0,
+  positions: {},      // objectId -> zoneId (current)
+  giftRevealed: false,
+  avaIndex: 0,
+  avaSub: 0 // 0 = avant blank, 1 = apres blank
+};
+
+function resetState(){
+  state.m1Index = 0;
+  state.m2Index = 0;
+  state.m2CompletedCount = 0;
+  state.giftRevealed = false;
+  state.avaIndex = 0;
+  state.avaSub = 0;
+  state.positions = {};
+  for (const id in OBJECTS){ state.positions[id] = OBJECTS[id].start; }
+}
+resetState();
+
+/* ================= HELPERS ================= */
+
+function el(tag, cls, html){
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (html !== undefined) e.innerHTML = html;
+  return e;
+}
+function showScreen(id){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
+function shuffle(arr){
+  const a = arr.slice();
+  for (let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+/* ================= ROOM RENDERING ================= */
+
+function buildFurniture(container){
+  container.appendChild(el("div","rug"));
+  container.appendChild(el("div","furn armoire","armoire"));
+  container.appendChild(el("div","furn bureau","bureau"));
+  container.appendChild(el("div","furn etagere","étagère"));
+  const lit = el("div","furn lit","lit");
+  lit.appendChild(el("div","lit-pillow"));
+  lit.appendChild(el("div","lit-blanket"));
+  container.appendChild(lit);
+  container.appendChild(el("div","deco plante","🌱"));
+  container.appendChild(el("div","deco photo","🖼️"));
+  container.appendChild(el("div","deco teddy","🧸"));
+  container.appendChild(el("div","deco headphones","🎧"));
+}
+
+const room = document.getElementById("room");
+let objEls = {};
+let giftEl = null;
+let zoneHintEl = null;
+
+function buildRoom(){
+  room.innerHTML = "";
+  buildFurniture(room);
+
+  zoneHintEl = el("div","zone-hint");
+  room.appendChild(zoneHintEl);
+
+  giftEl = el("div","gift","🎁");
+  positionAbs(giftEl, GIFT_ZONE.x, GIFT_ZONE.y);
+  room.appendChild(giftEl);
+
+  objEls = {};
+  for (const id in OBJECTS){
+    const o = OBJECTS[id];
+    const d = el("div","obj", o.emoji);
+    d.dataset.id = id;
+    room.appendChild(d);
+    objEls[id] = d;
+    attachPointerHandlers(d, id);
+  }
+  refreshObjectPositions();
+}
+
+function positionAbs(elm, x, y){
+  elm.style.left = x + "%";
+  elm.style.top = y + "%";
+}
+
+function refreshObjectPositions(){
+  for (const id in OBJECTS){
+    const zone = ZONES[state.positions[id]];
+    positionAbs(objEls[id], zone.x, zone.y);
+  }
+}
+
+/* ================= INTRO ================= */
+
+document.getElementById("btn-start").addEventListener("click", ()=>{
+  buildRoom();
+  startMission1();
+});
+
+/* ================= MISSION 1 : QUIZ ================= */
+
+function renderDots(containerId, total, currentDone){
+  const c = document.getElementById(containerId);
+  c.innerHTML = "";
+  for (let i=0;i<total;i++){
+    const d = el("span","dot");
+    if (i < currentDone) d.classList.add("done");
+    else if (i === currentDone) d.classList.add("current");
+    c.appendChild(d);
+  }
+}
+
+function startMission1(){
+  showScreen("screen-game");
+  document.getElementById("mission-label").textContent = "🔎 MISSION 1 — CHERCHE !";
+  document.getElementById("role-banner").style.display = "none";
+  document.querySelectorAll(".obj").forEach(o=>o.classList.add("locked"));
+  state.m1Index = 0;
+  renderMission1Question();
+}
+
+function renderMission1Question(){
+  renderDots("progress-dots", MISSION1_QUESTIONS.length, state.m1Index);
+  const q = MISSION1_QUESTIONS[state.m1Index];
+  const panel = document.getElementById("panel");
+  panel.innerHTML = "";
+  panel.appendChild(el("div","panel-question", q.prompt));
+  const optWrap = el("div","options");
+  shuffle(q.options).forEach(optText=>{
+    const card = el("button","opt-card", optText);
+    card.addEventListener("click", ()=> handleM1Answer(optText, q, card, optWrap));
+    optWrap.appendChild(card);
+  });
+  panel.appendChild(optWrap);
+  panel.appendChild(el("div","feedback", "&nbsp;"));
+}
+
+function handleM1Answer(chosen, q, card, optWrap){
+  const fb = document.querySelector("#panel .feedback");
+  if (chosen === q.correct){
+    card.classList.add("correct");
+    fb.textContent = "✓ Bravo !";
+    fb.className = "feedback ok";
+    Array.from(optWrap.children).forEach(c=>c.style.pointerEvents="none");
+    setTimeout(()=>{
+      state.m1Index++;
+      if (state.m1Index < MISSION1_QUESTIONS.length){
+        renderMission1Question();
+      } else {
+        endMission1();
+      }
+    }, 700);
+  } else {
+    card.classList.add("wrong");
+    fb.textContent = "✗ Non, regarde encore une fois !";
+    fb.className = "feedback no";
+    setTimeout(()=>card.classList.remove("wrong"), 500);
+  }
+}
+
+function endMission1(){
+  renderDots("progress-dots", MISSION1_QUESTIONS.length, MISSION1_QUESTIONS.length);
+  showOverlay("😮","Super ! Mais le cadeau n'est pas là…","🧹 Il faut ranger la chambre !","▶ MISSION 2", startMission2);
+}
+
+/* ================= OVERLAY MESSAGES ================= */
+
+function showOverlay(emoji, line1, line2, btnText, onNext){
+  const overlay = el("div","overlay-msg");
+  const card = el("div","overlay-card");
+  card.appendChild(el("div","big-emoji", emoji));
+  card.appendChild(el("p", null, line1));
+  if (line2) card.appendChild(el("p", null, line2));
+  const btn = el("button","btn big", btnText);
+  btn.addEventListener("click", ()=>{ overlay.remove(); onNext(); });
+  card.appendChild(btn);
+  overlay.appendChild(card);
+  document.body.appendChild(overlay);
+}
+
+/* ================= MISSION 2 : RANGE LA CHAMBRE ================= */
+
+function startMission2(){
+  document.getElementById("mission-label").textContent = "🧹 MISSION 2 — RANGE LA CHAMBRE !";
+  document.getElementById("role-banner").style.display = "flex";
+  document.querySelectorAll(".obj").forEach(o=>{ o.classList.remove("locked"); o.classList.remove("done"); });
+  state.m2Index = 0;
+  state.m2CompletedCount = 0;
+  renderMission2Task();
+}
+
+function updateRoleBanner(){
+  const pairIndex = Math.floor(state.m2Index / 2) % 2;
+  const roleA = document.getElementById("role-a");
+  const roleB = document.getElementById("role-b");
+  if (pairIndex === 0){
+    roleA.classList.add("active"); roleB.classList.remove("active");
+  } else {
+    roleB.classList.add("active"); roleA.classList.remove("active");
+  }
+}
+
+function renderMission2Task(){
+  const total = MISSION2_ORDER.length;
+  renderDots("progress-dots", total, state.m2CompletedCount);
+  updateRoleBanner();
+
+  // lock every object except the current task's object
+  const currentId = MISSION2_ORDER[state.m2Index];
+  document.querySelectorAll(".obj").forEach(o=>{
+    if (o.dataset.id === currentId) o.classList.remove("locked");
+    else o.classList.add("locked");
+  });
+
+  const o = OBJECTS[currentId];
+  const targetZone = ZONES[o.target];
+  const panel = document.getElementById("panel");
+  panel.innerHTML = "";
+  panel.appendChild(el("div","pict", o.emoji));
+  panel.appendChild(el("div","panel-instr", frenchTask(currentId)));
+  panel.appendChild(el("div","hint-mode","👉 Glisse l'objet, ou touche l'objet puis touche l'endroit."));
+  panel.appendChild(el("div","feedback","&nbsp;"));
+
+  // show the target zone hint
+  positionAbs(zoneHintEl, targetZone.x, targetZone.y);
+  zoneHintEl.classList.add("show");
+}
+
+function frenchTask(id){
+  const map = {
+    livres: "« Mets les livres sur l'étagère. »",
+    chaussures: "« Mets les chaussures sous le lit. »",
+    vetements: "« Mets les vêtements dans l'armoire. »",
+    cles: "« Mets les clés sur le bureau. »",
+    ballon: "« Mets le ballon devant l'armoire. »",
+    sac: "« Mets le sac à côté de l'armoire. »"
+  };
+  return map[id];
+}
+
+function taskFeedback(msg, ok){
+  const fb = document.querySelector("#panel .feedback");
+  if (!fb) return;
+  fb.textContent = msg;
+  fb.className = "feedback " + (ok ? "ok" : "no");
+}
+
+function completeCurrentTask(){
+  const currentId = MISSION2_ORDER[state.m2Index];
+  state.positions[currentId] = OBJECTS[currentId].target;
+  refreshObjectPositions();
+  objEls[currentId].classList.add("done","locked");
+  zoneHintEl.classList.remove("show");
+  taskFeedback("✓ Très bien !", true);
+  state.m2CompletedCount++;
+
+  const isSac = (currentId === "sac");
+
+  setTimeout(()=>{
+    if (isSac){
+      revealGift();
+      return;
+    }
+    state.m2Index++;
+    if (state.m2Index >= MISSION2_ORDER.length){
+      // shouldn't happen before sac, but just in case
+      revealGift();
+      return;
+    }
+    if (state.m2CompletedCount % 2 === 0){
+      showOverlay("🔄","CHANGEZ DE RÔLE !",null,"Continuer", renderMission2Task);
+    } else {
+      renderMission2Task();
+    }
+  }, 650);
+}
+
+function revealGift(){
+  document.getElementById("mission-label").textContent = "🎁 MISSION 3 — TROUVE LE CADEAU !";
+  document.getElementById("role-banner").style.display = "none";
+  document.getElementById("panel").innerHTML = "";
+  renderDots("progress-dots", MISSION2_ORDER.length, MISSION2_ORDER.length);
+
+  giftEl.classList.add("revealed");
+  state.giftRevealed = true;
+
+  // little star burst
+  const stars = ["✨","⭐","✨"];
+  stars.forEach((s,i)=>{
+    const sp = el("span","spark", s);
+    positionAbs(sp, GIFT_ZONE.x + (i-1)*8, GIFT_ZONE.y - 6);
+    room.appendChild(sp);
+    setTimeout(()=>sp.classList.add("show"), 50*i);
+    setTimeout(()=>sp.remove(), 1200);
+  });
+
+  setTimeout(()=>{
+    showOverlay(AVATAR_SVG,"« Oh ! Voilà le cadeau d'Idriss ! »","« Merci ! Ma chambre est rangée et j'ai le cadeau ! »","▶ Continuer", startAvantApres);
+  }, 900);
+}
+
+/* ================= POINTER / DRAG LOGIC ================= */
+
+let drag = null;      // {id, startX, startY, moved}
+let selectedId = null;
+
+function attachPointerHandlers(elm, id){
+  elm.addEventListener("pointerdown", (e)=>{
+    if (elm.classList.contains("locked") || elm.classList.contains("done")) return;
+    if (!isDraggableNow(id)) return;
+    e.preventDefault();
+    elm.setPointerCapture(e.pointerId);
+    drag = {id, startX:e.clientX, startY:e.clientY, moved:false, pointerId:e.pointerId};
+    elm.classList.add("dragging");
+  });
+
+  elm.addEventListener("pointermove", (e)=>{
+    if (!drag || drag.id !== id) return;
+    const dx = Math.abs(e.clientX - drag.startX);
+    const dy = Math.abs(e.clientY - drag.startY);
+    if (dx > 6 || dy > 6) drag.moved = true;
+    if (drag.moved){
+      const rect = room.getBoundingClientRect();
+      let relX = ((e.clientX - rect.left)/rect.width)*100;
+      let relY = ((e.clientY - rect.top)/rect.height)*100;
+      relX = Math.max(2, Math.min(98, relX));
+      relY = Math.max(2, Math.min(98, relY));
+      positionAbs(elm, relX, relY);
+    }
+  });
+
+  elm.addEventListener("pointerup", (e)=>{
+    if (!drag || drag.id !== id) return;
+    elm.classList.remove("dragging");
+    const wasDrag = drag.moved;
+    drag = null;
+    if (wasDrag){
+      const rect = room.getBoundingClientRect();
+      const relX = ((e.clientX - rect.left)/rect.width)*100;
+      const relY = ((e.clientY - rect.top)/rect.height)*100;
+      attemptPlacement(id, relX, relY);
+    } else {
+      // treat as tap-select
+      toggleSelect(id);
+    }
+  });
+
+  elm.addEventListener("pointercancel", ()=>{
+    drag = null;
+    elm.classList.remove("dragging");
+    refreshObjectPositions();
+  });
+}
+
+function isDraggableNow(id){
+  const currentId = MISSION2_ORDER[state.m2Index];
+  return id === currentId;
+}
+
+function toggleSelect(id){
+  if (!isDraggableNow(id)) return;
+  if (selectedId === id){
+    selectedId = null;
+    objEls[id].classList.remove("selected");
+    return;
+  }
+  if (selectedId) objEls[selectedId].classList.remove("selected");
+  selectedId = id;
+  objEls[id].classList.add("selected");
+}
+
+room.addEventListener("pointerdown", (e)=>{
+  // if a room-background tap happens (not on an object) while something is selected -> try placement
+  if (e.target !== room && e.target.closest(".obj")) return;
+  if (!selectedId) return;
+  const rect = room.getBoundingClientRect();
+  const relX = ((e.clientX - rect.left)/rect.width)*100;
+  const relY = ((e.clientY - rect.top)/rect.height)*100;
+  const id = selectedId;
+  objEls[id].classList.remove("selected");
+  selectedId = null;
+  attemptPlacement(id, relX, relY);
+});
+
+function attemptPlacement(id, relX, relY){
+  const currentId = MISSION2_ORDER[state.m2Index];
+  if (id !== currentId){ refreshObjectPositions(); return; }
+  const targetZone = ZONES[OBJECTS[id].target];
+  const dx = Math.abs(relX - targetZone.x);
+  const dy = Math.abs(relY - targetZone.y);
+  if (dx < 14 && dy < 16){
+    completeCurrentTask();
+  } else {
+    taskFeedback("✗ Non, essaie encore !", false);
+    objEls[id].classList.add("wrong-shake");
+    setTimeout(()=>objEls[id].classList.remove("wrong-shake"), 400);
+    refreshObjectPositions();
+  }
+}
+
+/* ================= AVANT / APRES ================= */
+
+function buildMiniRoom(containerId, mode){
+  const c = document.getElementById(containerId);
+  c.innerHTML = "";
+  buildFurniture(c);
+  // scale down furniture text (css already handles via .mini-room .furn font-size:0)
+  for (const id in OBJECTS){
+    const o = OBJECTS[id];
+    const zoneId = (mode === "avant") ? o.start : o.target;
+    const zone = ZONES[zoneId];
+    const d = el("div","obj-static", o.emoji);
+    d.style.left = zone.x + "%";
+    d.style.top = zone.y + "%";
+    c.appendChild(d);
+  }
+  if (mode === "apres"){
+    const d = el("div","obj-static","🎁");
+    d.style.left = GIFT_ZONE.x + "%";
+    d.style.top = GIFT_ZONE.y + "%";
+    c.appendChild(d);
+  }
+}
+
+function startAvantApres(){
+  showScreen("screen-avant");
+  buildMiniRoom("mini-avant","avant");
+  buildMiniRoom("mini-apres","apres");
+  state.avaIndex = 0;
+  state.avaSub = 0;
+  renderAvantApresStep();
+}
+
+function renderAvantApresStep(){
+  renderDots("progress-dots-2", AVANT_APRES.length, state.avaIndex);
+  const task = AVANT_APRES[state.avaIndex];
+  const isAvant = state.avaSub === 0;
+  const text = isAvant ? task.avantText : task.apresText;
+  const answer = isAvant ? task.avantAnswer : task.apresAnswer;
+  const label = isAvant ? "😱 AVANT" : "😍 APRÈS";
+
+  const panel = document.getElementById("panel-avant");
+  panel.innerHTML = "";
+  panel.appendChild(el("div","panel-question", task.label + " — " + label));
+  panel.appendChild(el("div","blank-sentence", text.replace("____", '<span class="blank">&nbsp;</span>')));
+
+  const optWrap = el("div","options");
+  shuffle(task.options).forEach(optText=>{
+    const card = el("button","opt-card", optText);
+    card.addEventListener("click", ()=> handleAvantAnswer(optText, answer, card, optWrap));
+    optWrap.appendChild(card);
+  });
+  panel.appendChild(optWrap);
+  panel.appendChild(el("div","feedback","&nbsp;"));
+}
+
+function handleAvantAnswer(chosen, answer, card, optWrap){
+  const fb = document.querySelector("#panel-avant .feedback");
+  if (chosen === answer){
+    card.classList.add("correct");
+    fb.textContent = "✓ Bravo !";
+    fb.className = "feedback ok";
+    Array.from(optWrap.children).forEach(c=>c.style.pointerEvents="none");
+    setTimeout(()=>{
+      if (state.avaSub === 0){
+        state.avaSub = 1;
+        renderAvantApresStep();
+      } else {
+        state.avaIndex++;
+        state.avaSub = 0;
+        if (state.avaIndex < AVANT_APRES.length){
+          renderAvantApresStep();
+        } else {
+          finishGame();
+        }
+      }
+    }, 650);
+  } else {
+    card.classList.add("wrong");
+    fb.textContent = "✗ Essaie encore !";
+    fb.className = "feedback no";
+    setTimeout(()=>card.classList.remove("wrong"), 500);
+  }
+}
+
+/* ================= FINAL ================= */
+
+function finishGame(){
+  renderDots("progress-dots-2", AVANT_APRES.length, AVANT_APRES.length);
+  showScreen("screen-final");
+  launchConfetti();
+}
+
+function launchConfetti(){
+  const emojis = ["🎉","✨","🎊","⭐","🎁"];
+  for (let i=0;i<22;i++){
+    const c = el("div","confetti", emojis[i % emojis.length]);
+    c.style.left = (Math.random()*100) + "%";
+    c.style.animationDuration = (1.6 + Math.random()*1.2) + "s";
+    document.body.appendChild(c);
+    setTimeout(()=>c.remove(), 3000);
+  }
+}
+
+document.getElementById("btn-replay").addEventListener("click", ()=>{
+  resetState();
+  buildRoom();
+  showScreen("screen-intro");
+});
+
+})();
+</script>
+</body>
+</html>
